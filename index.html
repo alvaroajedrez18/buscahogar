@@ -172,13 +172,6 @@ footer{text-align:center;padding:2rem;font-size:12px;color:var(--ink3);border-to
 let modo='alquiler';
 function setModo(m,btn){modo=m;document.querySelectorAll('.pill').forEach(p=>p.classList.remove('active'));btn.classList.add('active')}
 
-const SLUGS_IDEALISTA={'madrid':'madrid-municipio','barcelona':'barcelona-municipio','valencia':'valencia-municipio','sevilla':'sevilla-municipio','bilbao':'bilbao','zaragoza':'zaragoza-municipio','malaga':'malaga-municipio','alicante':'alicante-municipio','murcia':'murcia-municipio','valladolid':'valladolid-municipio','palma':'palma-de-mallorca','las palmas':'las-palmas-de-gran-canaria','vitoria':'vitoria-gasteiz','san sebastian':'donostia-san-sebastian','santander':'santander','cordoba':'cordoba-municipio','granada':'granada-municipio','vigo':'vigo','gijon':'gijon','la coruna':'a-coruna','cadiz':'cadiz','toledo':'toledo','burgos':'burgos','salamanca':'salamanca','logrono':'logrono','badajoz':'badajoz','huelva':'huelva','leon':'leon','tarragona':'tarragona','lleida':'lleida','girona':'girona'};
-
-const SLUGS_FOTOCASA={'madrid':'madrid-municipio','barcelona':'barcelona-municipio','valencia':'valencia-municipio','sevilla':'sevilla-municipio','bilbao':'bilbao','zaragoza':'zaragoza-municipio','malaga':'malaga-municipio','alicante':'alicante-municipio','murcia':'murcia-municipio','palma':'palma-de-mallorca','vitoria':'vitoria-gasteiz','san sebastian':'san-sebastian','santander':'santander','cordoba':'cordoba-municipio','granada':'granada-municipio','vigo':'vigo','gijon':'gijon','la coruna':'a-coruna','valladolid':'valladolid-municipio'};
-
-function normalizar(s){return s.toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g,'')}
-function getSlug(ciudad,mapa){const n=normalizar(ciudad);if(mapa[n])return mapa[n];return n.replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'')}
-
 const PORTALES=[
   {id:'idealista',name:'Idealista',desc:'El mayor catálogo de hogares de España'},
   {id:'fotocasa',name:'Fotocasa',desc:'Miles de anuncios con fotos y visitas virtuales'},
@@ -190,34 +183,32 @@ const PORTALES=[
   {id:'buscoinmueble',name:'Buscoinmueble',desc:'Agrega anuncios de múltiples fuentes'}
 ];
 
+function normalizar(s){return s.toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g,'')}
+
 function buildUrl(id,ciudad,tipo,hab,pmin,pmax,metros){
   const es=encodeURIComponent(ciudad);
+  const n=normalizar(ciudad);
   let url='';
+
   if(id==='idealista'){
-    const s=getSlug(ciudad,SLUGS_IDEALISTA);
-    url=`https://www.idealista.com/${modo==='compra'?'venta':'alquiler'}-viviendas/${s}/`;
-    const p=[];
-    if(tipo)p.push(`tipologia=${tipo}`);
-    if(hab)p.push(`habitaciones=${hab}`);
-    if(pmax)p.push(`precio-hasta=${pmax}`);
-    if(pmin)p.push(`precio-desde=${pmin}`);
-    if(metros)p.push(`metros-cuadrados-mas-de=${metros}`);
-    if(document.getElementById('x-ascensor').checked)p.push('caracteristicas[]=ascensor');
-    if(document.getElementById('x-garaje').checked)p.push('caracteristicas[]=garaje');
-    if(document.getElementById('x-terraza').checked)p.push('caracteristicas[]=terraza');
-    if(p.length)url+='?'+p.join('&');
-  }else if(id==='fotocasa'){
-    const s=getSlug(ciudad,SLUGS_FOTOCASA);
-    url=`https://www.fotocasa.es/${modo==='compra'?'comprar':'alquiler'}/vivienda/${s}/todas-las-zonas/l`;
-    const p=[];
-    if(pmax)p.push(`priceMax=${pmax}`);
-    if(pmin)p.push(`priceMin=${pmin}`);
-    if(hab)p.push(`minRooms=${hab}`);
-    if(metros)p.push(`minSurface=${metros}`);
-    if(document.getElementById('x-amueblado').checked)p.push('furnished=1');
-    if(p.length)url+='?'+p.join('&');
-  }else if(id==='habitaclia'){
-    const s=normalizar(ciudad).replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'');
+    // Usamos el buscador general de Idealista — nunca da error de URL
+    const accion=modo==='compra'?'venta':'alquiler';
+    url=`https://www.idealista.com/${accion}-viviendas/?texto=${es}`;
+    if(hab)url+=`&habitaciones=${hab}`;
+    if(pmax)url+=`&precio-hasta=${pmax}`;
+    if(pmin)url+=`&precio-desde=${pmin}`;
+    if(metros)url+=`&metros-cuadrados-mas-de=${metros}`;
+    if(tipo)url+=`&tipologia=${tipo}`;
+  } else if(id==='fotocasa'){
+    // Usamos el buscador general de Fotocasa — nunca da error de URL
+    const accion=modo==='compra'?'comprar':'alquiler';
+    url=`https://www.fotocasa.es/${accion}/vivienda/espana/todas-las-zonas/l?texto=${es}`;
+    if(pmax)url+=`&priceMax=${pmax}`;
+    if(pmin)url+=`&priceMin=${pmin}`;
+    if(hab)url+=`&minRooms=${hab}`;
+    if(metros)url+=`&minSurface=${metros}`;
+  } else if(id==='habitaclia'){
+    const s=n.replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'');
     url=`https://www.habitaclia.com/${modo==='compra'?'comprar':'alquiler'}-en-${s}`;
     const p=[];
     if(pmax)p.push(`maxprice=${pmax}`);
@@ -225,8 +216,8 @@ function buildUrl(id,ciudad,tipo,hab,pmin,pmax,metros){
     if(hab)p.push(`rooms=${hab}`);
     if(metros)p.push(`minarea=${metros}`);
     if(p.length)url+='?'+p.join('&');
-  }else if(id==='pisos'){
-    const s=normalizar(ciudad).replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'');
+  } else if(id==='pisos'){
+    const s=n.replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'');
     url=`https://www.pisos.com/${modo==='compra'?'pisos-venta':'alquiler-pisos'}/${s}/`;
     const p=[];
     if(pmax)p.push(`maxprice=${pmax}`);
@@ -234,21 +225,21 @@ function buildUrl(id,ciudad,tipo,hab,pmin,pmax,metros){
     if(hab)p.push(`habitaciones=${hab}`);
     if(metros)p.push(`minmeters=${metros}`);
     if(p.length)url+='?'+p.join('&');
-  }else if(id==='milanuncios'){
+  } else if(id==='milanuncios'){
     url=`https://www.milanuncios.com/${modo==='compra'?'inmobiliaria':'pisos-en-alquiler'}/?demanda=n&q=${es}`;
     if(pmax)url+=`&precio_hasta=${pmax}`;
     if(pmin)url+=`&precio_desde=${pmin}`;
-  }else if(id==='trovit'){
+  } else if(id==='trovit'){
     url=`https://casas.trovit.es/index.php/cod.search_homes/type.${modo==='compra'?'2':'1'}/what_d.${es}/origin.0`;
     if(pmax)url+=`/price_max.${pmax}`;
     if(pmin)url+=`/price_min.${pmin}`;
     if(metros)url+=`/size_min.${metros}`;
-  }else if(id==='kyero'){
+  } else if(id==='kyero'){
     url=`https://www.kyero.com/es/${modo==='compra'?'en-venta':'en-alquiler'}?q=${es}`;
     if(pmax)url+=`&max_price=${pmax}`;
     if(pmin)url+=`&min_price=${pmin}`;
     if(hab)url+=`&bedrooms_min=${hab}`;
-  }else{
+  } else {
     url=`https://www.buscoinmueble.com/${modo==='compra'?'venta':'alquiler'}/?texto=${es}`;
     if(pmax)url+=`&precio_max=${pmax}`;
     if(pmin)url+=`&precio_min=${pmin}`;
