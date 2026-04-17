@@ -6,136 +6,91 @@
 <title>Hogar. — Encuentra tu próximo hogar</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  :root {
-    --ink: #0d0d0d; --ink2: #555; --ink3: #999;
-    --bg: #f7f5f2; --surface: #ffffff; --surface2: #f0ede8;
-    --accent: #ff5c3a; --accent2: #1a1a2e;
-    --border: rgba(0,0,0,0.08); --border2: rgba(0,0,0,0.15);
-    --r: 14px; --r-sm: 10px;
-    --head: 'Syne', sans-serif; --body: 'Inter', sans-serif;
-  }
-  body { font-family: var(--body); background: var(--bg); color: var(--ink); min-height: 100vh; overflow-x: hidden; }
-
-  nav {
-    background: var(--accent2); padding: 0 2.5rem; height: 60px;
-    display: flex; align-items: center; justify-content: space-between;
-    position: sticky; top: 0; z-index: 100;
-  }
-  .nav-logo { font-family: var(--head); font-size: 20px; font-weight: 800; color: #fff; letter-spacing: -0.5px; }
-  .nav-logo em { color: var(--accent); font-style: normal; }
-  .nav-tag { font-size: 11px; font-weight: 500; color: rgba(255,255,255,0.4); letter-spacing: 0.1em; text-transform: uppercase; }
-
-  .hero { background: var(--accent2); padding: 3.5rem 2.5rem 0; text-align: center; }
-  .hero-label {
-    display: inline-block; background: rgba(255,92,58,0.18); color: var(--accent);
-    font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase;
-    padding: 6px 16px; border-radius: 100px; margin-bottom: 1.5rem; border: 1px solid rgba(255,92,58,0.3);
-  }
-  .hero h1 {
-    font-family: var(--head); font-size: clamp(2.2rem, 5vw, 3.8rem);
-    font-weight: 800; color: #fff; line-height: 1.05; letter-spacing: -1.5px; margin-bottom: 1rem;
-  }
-  .hero h1 span { color: var(--accent); }
-  .hero p { font-size: 16px; font-weight: 300; color: rgba(255,255,255,0.5); margin-bottom: 3rem; max-width: 400px; margin-left: auto; margin-right: auto; }
-
-  .search-float {
-    background: var(--surface); border-radius: 20px 20px 0 0;
-    padding: 2rem 2rem 0; max-width: 780px; margin: 0 auto;
-  }
-
-  .mode-pills {
-    display: flex; gap: 6px; margin-bottom: 1.75rem;
-    background: var(--surface2); padding: 5px; border-radius: 100px;
-  }
-  .pill {
-    flex: 1; padding: 9px 12px; border: none; background: transparent;
-    border-radius: 100px; font-family: var(--body); font-size: 13px;
-    font-weight: 500; color: var(--ink3); cursor: pointer; transition: all 0.2s; white-space: nowrap;
-  }
-  .pill.active { background: var(--accent2); color: #fff; }
-
-  .main-search { position: relative; margin-bottom: 1.25rem; }
-  .main-search input {
-    width: 100%; padding: 18px 60px 18px 20px; border: 2px solid var(--border2);
-    border-radius: var(--r); font-family: var(--body); font-size: 16px;
-    color: var(--ink); background: var(--surface2); outline: none; transition: border-color 0.2s;
-  }
-  .main-search input:focus { border-color: var(--accent); background: #fff; }
-  .main-search input::placeholder { color: var(--ink3); }
-  .search-icon {
-    position: absolute; right: 18px; top: 50%; transform: translateY(-50%);
-    width: 26px; height: 26px; background: var(--accent2); border-radius: 8px;
-    display: flex; align-items: center; justify-content: center;
-  }
-  .search-icon svg { width: 14px; height: 14px; stroke: #fff; fill: none; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
-
-  .filters-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 1.25rem; }
-  .filter-box { display: flex; flex-direction: column; gap: 5px; }
-  .filter-box label { font-size: 10px; font-weight: 600; color: var(--ink3); text-transform: uppercase; letter-spacing: 0.08em; }
-  .filter-box select, .filter-box input {
-    background: var(--surface2); border: 1.5px solid var(--border);
-    border-radius: var(--r-sm); padding: 10px 12px; font-family: var(--body);
-    font-size: 13px; color: var(--ink); outline: none; transition: border-color 0.2s;
-    -webkit-appearance: none; width: 100%;
-  }
-  .filter-box select:focus, .filter-box input:focus { border-color: var(--accent); }
-  .price-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
-
-  .btn-buscar {
-    width: 100%; padding: 17px; background: var(--accent); color: #fff; border: none;
-    border-radius: var(--r-sm); font-family: var(--head); font-size: 15px;
-    font-weight: 700; letter-spacing: 0.02em; cursor: pointer; transition: all 0.2s; margin-bottom: 1.5rem;
-  }
-  .btn-buscar:hover { background: #e04828; transform: translateY(-1px); }
-  .btn-buscar:active { transform: translateY(0); }
-
-  .body-section { background: var(--bg); padding: 2rem 2.5rem 3rem; max-width: 780px; margin: 0 auto; }
-
-  .notice {
-    background: #fff8f0; border: 1.5px solid #ffd4c2; border-radius: var(--r-sm);
-    padding: 12px 16px; font-size: 13px; color: #a03a20;
-    display: none; gap: 10px; align-items: flex-start; margin-bottom: 1.5rem;
-  }
-  .notice-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); flex-shrink: 0; margin-top: 4px; }
-
-  .results-header { display: none; align-items: baseline; justify-content: space-between; margin-bottom: 1rem; }
-  .results-header h2 { font-family: var(--head); font-size: 18px; font-weight: 700; color: var(--ink); }
-  .results-header span { font-size: 13px; color: var(--ink3); }
-
-  .portals-list { display: none; flex-direction: column; gap: 10px; }
-
-  .portal-row {
-    background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--r);
-    padding: 1.25rem 1.5rem; display: flex; align-items: center; justify-content: space-between;
-    gap: 1rem; text-decoration: none; color: inherit; transition: all 0.18s;
-  }
-  .portal-row:hover { border-color: var(--accent); transform: translateX(6px); }
-  .portal-num {
-    width: 32px; height: 32px; border-radius: 8px; background: var(--surface2);
-    display: flex; align-items: center; justify-content: center;
-    font-family: var(--head); font-size: 13px; font-weight: 700; color: var(--ink2); flex-shrink: 0;
-    transition: all 0.18s;
-  }
-  .portal-row:hover .portal-num { background: var(--accent); color: #fff; }
-  .portal-info { flex: 1; }
-  .portal-name { font-family: var(--head); font-size: 15px; font-weight: 700; color: var(--ink); margin-bottom: 2px; }
-  .portal-desc { font-size: 12px; color: var(--ink3); }
-  .portal-arrow { font-size: 22px; color: var(--border2); transition: color 0.18s; }
-  .portal-row:hover .portal-arrow { color: var(--accent); }
-
-  .tags-row { display: none; flex-wrap: wrap; gap: 8px; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border); }
-  .tag { font-size: 11px; font-weight: 500; color: var(--ink3); background: var(--surface); border: 1px solid var(--border); padding: 4px 12px; border-radius: 100px; }
-
-  footer { text-align: center; padding: 2rem; font-size: 12px; color: var(--ink3); border-top: 1px solid var(--border); background: var(--bg); }
-
-  @media (max-width: 620px) {
-    .filters-row { grid-template-columns: 1fr 1fr; }
-    .hero { padding: 2.5rem 1.25rem 0; }
-    .search-float { padding: 1.5rem 1.25rem 0; }
-    .body-section { padding: 1.5rem 1.25rem 2rem; }
-    nav { padding: 0 1.25rem; }
-  }
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --ink:#0d0d0d;--ink2:#555;--ink3:#999;
+  --bg:#f7f5f2;--surface:#ffffff;--surface2:#f0ede8;
+  --accent:#ff5c3a;--accent2:#1a1a2e;
+  --border:rgba(0,0,0,0.08);--border2:rgba(0,0,0,0.15);
+  --r:14px;--r-sm:10px;
+  --head:'Syne',sans-serif;--body:'Inter',sans-serif;
+}
+body{font-family:var(--body);background:var(--bg);color:var(--ink);min-height:100vh;overflow-x:hidden}
+nav{background:var(--accent2);padding:0 2.5rem;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.nav-logo{font-family:var(--head);font-size:20px;font-weight:800;color:#fff;letter-spacing:-0.5px}
+.nav-logo em{color:var(--accent);font-style:normal}
+.nav-tag{font-size:11px;font-weight:500;color:rgba(255,255,255,0.4);letter-spacing:0.1em;text-transform:uppercase}
+.hero{background:var(--accent2);padding:3.5rem 2.5rem 0;text-align:center}
+.hero-label{display:inline-block;background:rgba(255,92,58,0.18);color:var(--accent);font-size:11px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;padding:6px 16px;border-radius:100px;margin-bottom:1.5rem;border:1px solid rgba(255,92,58,0.3)}
+.hero h1{font-family:var(--head);font-size:clamp(2.2rem,5vw,3.8rem);font-weight:800;color:#fff;line-height:1.05;letter-spacing:-1.5px;margin-bottom:1rem}
+.hero h1 span{color:var(--accent)}
+.hero p{font-size:16px;font-weight:300;color:rgba(255,255,255,0.5);margin-bottom:3rem;max-width:400px;margin-left:auto;margin-right:auto}
+.search-float{background:var(--surface);border-radius:20px 20px 0 0;padding:2rem 2rem 0;max-width:780px;margin:0 auto}
+.mode-pills{display:flex;gap:6px;margin-bottom:1.75rem;background:var(--surface2);padding:5px;border-radius:100px}
+.pill{flex:1;padding:9px 12px;border:none;background:transparent;border-radius:100px;font-family:var(--body);font-size:13px;font-weight:500;color:var(--ink3);cursor:pointer;transition:all 0.2s;white-space:nowrap}
+.pill.active{background:var(--accent2);color:#fff}
+.main-search{position:relative;margin-bottom:0.75rem}
+.main-search input{width:100%;padding:18px 60px 18px 20px;border:2px solid var(--border2);border-radius:var(--r);font-family:var(--body);font-size:16px;color:var(--ink);background:var(--surface2);outline:none;transition:border-color 0.2s}
+.main-search input:focus{border-color:var(--accent);background:#fff}
+.main-search input::placeholder{color:var(--ink3)}
+.search-icon{position:absolute;right:18px;top:50%;transform:translateY(-50%);width:26px;height:26px;background:var(--accent2);border-radius:8px;display:flex;align-items:center;justify-content:center}
+.search-icon svg{width:14px;height:14px;stroke:#fff;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+.recent-searches{margin-bottom:1rem;min-height:24px}
+.recent-label{font-size:11px;color:var(--ink3);margin-bottom:6px;font-weight:500}
+.recent-pills{display:flex;flex-wrap:wrap;gap:6px}
+.recent-pill{font-size:12px;color:var(--ink2);background:var(--surface2);border:1px solid var(--border2);padding:4px 12px;border-radius:100px;cursor:pointer;transition:all 0.15s;display:flex;align-items:center;gap:6px}
+.recent-pill:hover{border-color:var(--accent);color:var(--accent)}
+.recent-x{font-size:10px;color:var(--ink3);cursor:pointer;line-height:1}
+.recent-x:hover{color:#cc0000}
+.filters-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:1rem}
+.filter-box{display:flex;flex-direction:column;gap:5px}
+.filter-box label{font-size:10px;font-weight:600;color:var(--ink3);text-transform:uppercase;letter-spacing:0.08em}
+.filter-box select,.filter-box input{background:var(--surface2);border:1.5px solid var(--border);border-radius:var(--r-sm);padding:10px 12px;font-family:var(--body);font-size:13px;color:var(--ink);outline:none;transition:border-color 0.2s;-webkit-appearance:none;width:100%}
+.filter-box select:focus,.filter-box input:focus{border-color:var(--accent)}
+.price-pair{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.extras-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:1.25rem}
+.extra-check{display:flex;align-items:center;gap:6px;cursor:pointer;user-select:none}
+.extra-check input{display:none}
+.extra-box{padding:7px 14px;border:1.5px solid var(--border2);border-radius:100px;font-size:12px;font-weight:500;color:var(--ink2);background:var(--surface2);transition:all 0.15s}
+.extra-check input:checked+.extra-box{background:var(--accent2);color:#fff;border-color:var(--accent2)}
+.btn-row{display:flex;gap:10px;margin-bottom:1.5rem}
+.btn-buscar{flex:1;padding:17px;background:var(--accent);color:#fff;border:none;border-radius:var(--r-sm);font-family:var(--head);font-size:15px;font-weight:700;letter-spacing:0.02em;cursor:pointer;transition:all 0.2s}
+.btn-buscar:hover{background:#e04828;transform:translateY(-1px)}
+.btn-limpiar{padding:17px 20px;background:transparent;color:var(--ink3);border:1.5px solid var(--border2);border-radius:var(--r-sm);font-family:var(--body);font-size:13px;font-weight:500;cursor:pointer;transition:all 0.2s;white-space:nowrap}
+.btn-limpiar:hover{border-color:var(--ink);color:var(--ink)}
+.body-section{background:var(--bg);padding:2rem 2.5rem 3rem;max-width:780px;margin:0 auto}
+.searching{display:none;text-align:center;padding:2rem 0}
+.searching-text{font-family:var(--head);font-size:16px;font-weight:700;color:var(--ink2);margin-bottom:0.5rem}
+.dots span{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--accent);margin:0 3px;animation:bounce 1.2s infinite}
+.dots span:nth-child(2){animation-delay:0.2s}
+.dots span:nth-child(3){animation-delay:0.4s}
+@keyframes bounce{0%,80%,100%{transform:scale(0.6);opacity:0.4}40%{transform:scale(1);opacity:1}}
+.notice{background:#fff8f0;border:1.5px solid #ffd4c2;border-radius:var(--r-sm);padding:12px 16px;font-size:13px;color:#a03a20;display:none;gap:10px;align-items:flex-start;margin-bottom:1.5rem}
+.notice-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);flex-shrink:0;margin-top:4px}
+.results-header{display:none;align-items:baseline;justify-content:space-between;margin-bottom:1rem}
+.results-header h2{font-family:var(--head);font-size:18px;font-weight:700;color:var(--ink)}
+.results-header span{font-size:13px;color:var(--ink3)}
+.portals-list{display:none;flex-direction:column;gap:10px}
+.portal-row{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--r);padding:1.25rem 1.5rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;text-decoration:none;color:inherit;transition:all 0.18s;opacity:0;transform:translateY(10px)}
+.portal-row.visible{opacity:1;transform:translateY(0);transition:opacity 0.3s ease,transform 0.3s ease,border-color 0.18s}
+.portal-row:hover{border-color:var(--accent);transform:translateX(6px)}
+.portal-num{width:32px;height:32px;border-radius:8px;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-family:var(--head);font-size:13px;font-weight:700;color:var(--ink2);flex-shrink:0;transition:all 0.18s}
+.portal-row:hover .portal-num{background:var(--accent);color:#fff}
+.portal-info{flex:1}
+.portal-name{font-family:var(--head);font-size:15px;font-weight:700;color:var(--ink);margin-bottom:2px}
+.portal-desc{font-size:12px;color:var(--ink3)}
+.portal-arrow{font-size:22px;color:var(--border2);transition:color 0.18s}
+.portal-row:hover .portal-arrow{color:var(--accent)}
+.tags-row{display:none;flex-wrap:wrap;gap:8px;margin-top:1rem;padding-top:1rem;border-top:1px solid var(--border)}
+.tag{font-size:11px;font-weight:500;color:var(--ink3);background:var(--surface);border:1px solid var(--border);padding:4px 12px;border-radius:100px}
+footer{text-align:center;padding:2rem;font-size:12px;color:var(--ink3);border-top:1px solid var(--border);background:var(--bg)}
+@media(max-width:620px){
+  .filters-row{grid-template-columns:1fr 1fr}
+  .hero{padding:2.5rem 1.25rem 0}
+  .search-float{padding:1.5rem 1.25rem 0}
+  .body-section{padding:1.5rem 1.25rem 2rem}
+  nav{padding:0 1.25rem}
+}
 </style>
 </head>
 <body>
@@ -149,73 +104,60 @@
   <div class="hero-label">Buscador de hogar</div>
   <h1>Tu próximo hogar<br><span>te está esperando</span></h1>
   <p>Busca en todos los sitios a la vez. Sin complicaciones.</p>
-
   <div class="search-float">
     <div class="mode-pills">
       <button class="pill active" onclick="setModo('alquiler',this)">Alquiler</button>
       <button class="pill" onclick="setModo('compra',this)">Compra</button>
       <button class="pill" onclick="setModo('compartir',this)">Compartir piso</button>
     </div>
-
     <div class="main-search">
-      <input type="text" id="ciudad" placeholder="¿Dónde quieres vivir? Ciudad, barrio..." />
-      <div class="search-icon">
-        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="22" y2="22"/></svg>
-      </div>
+      <input type="text" id="ciudad" placeholder="¿Dónde quieres vivir? Ciudad, barrio..."/>
+      <div class="search-icon"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="22" y2="22"/></svg></div>
     </div>
-
+    <div class="recent-searches" id="recent-searches"></div>
     <div class="filters-row">
       <div class="filter-box">
         <label>Tipo de hogar</label>
-        <select id="tipo">
-          <option value="">Cualquiera</option>
-          <option value="piso">Piso</option>
-          <option value="casa">Casa</option>
-          <option value="estudio">Estudio</option>
-          <option value="atico">Ático</option>
-          <option value="duplex">Dúplex</option>
-        </select>
+        <select id="tipo"><option value="">Cualquiera</option><option value="piso">Piso</option><option value="casa">Casa</option><option value="estudio">Estudio</option><option value="atico">Ático</option><option value="duplex">Dúplex</option></select>
       </div>
       <div class="filter-box">
         <label>Habitaciones</label>
-        <select id="habitaciones">
-          <option value="">Sin filtro</option>
-          <option value="1">1+</option>
-          <option value="2">2+</option>
-          <option value="3">3+</option>
-          <option value="4">4+</option>
-        </select>
+        <select id="habitaciones"><option value="">Sin filtro</option><option value="1">1+</option><option value="2">2+</option><option value="3">3+</option><option value="4">4+</option></select>
       </div>
       <div class="filter-box">
         <label>Precio (€)</label>
         <div class="price-pair">
-          <input type="number" id="pmin" placeholder="Mín" />
-          <input type="number" id="pmax" placeholder="Máx" />
+          <input type="number" id="pmin" placeholder="Mín"/>
+          <input type="number" id="pmax" placeholder="Máx"/>
         </div>
       </div>
       <div class="filter-box">
         <label>Metros m²</label>
-        <input type="number" id="metros" placeholder="Mín m²" />
+        <input type="number" id="metros" placeholder="Mín m²"/>
       </div>
     </div>
-
-    <button class="btn-buscar" onclick="buscar()">Buscar ahora →</button>
+    <div class="extras-row">
+      <label class="extra-check"><input type="checkbox" id="x-ascensor"><div class="extra-box">Ascensor</div></label>
+      <label class="extra-check"><input type="checkbox" id="x-garaje"><div class="extra-box">Garaje</div></label>
+      <label class="extra-check"><input type="checkbox" id="x-terraza"><div class="extra-box">Terraza</div></label>
+      <label class="extra-check"><input type="checkbox" id="x-mascotas"><div class="extra-box">Admite mascotas</div></label>
+      <label class="extra-check"><input type="checkbox" id="x-amueblado"><div class="extra-box">Amueblado</div></label>
+    </div>
+    <div class="btn-row">
+      <button class="btn-buscar" onclick="buscar()">Buscar ahora →</button>
+      <button class="btn-limpiar" onclick="limpiar()">Limpiar</button>
+    </div>
   </div>
 </div>
 
 <div class="body-section">
-  <div class="notice" id="notice">
-    <div class="notice-dot"></div>
-    <span>Accederás directamente a cada resultado con tus filtros ya aplicados. Resultados 100% reales y actualizados.</span>
+  <div class="searching" id="searching">
+    <div class="searching-text" id="searching-text">Buscando en 8 fuentes...</div>
+    <div class="dots"><span></span><span></span><span></span></div>
   </div>
-
-  <div class="results-header" id="results-header">
-    <h2 id="results-title">Hogares encontrados</h2>
-    <span id="results-count"></span>
-  </div>
-
+  <div class="notice" id="notice"><div class="notice-dot"></div><span>Accederás directamente a cada resultado con tus filtros ya aplicados. Resultados 100% reales y actualizados.</span></div>
+  <div class="results-header" id="results-header"><h2 id="results-title">Hogares encontrados</h2><span id="results-count"></span></div>
   <div class="portals-list" id="portals-list"></div>
-
   <div class="tags-row" id="tags-row">
     <span class="tag">Sin registro</span>
     <span class="tag">Resultados reales</span>
@@ -224,108 +166,144 @@
   </div>
 </div>
 
-<footer>hogar. &mdash; Beta gratuita &mdash; 2025</footer>
+<footer>hogar. — Beta gratuita — 2025</footer>
 
 <script>
-  let modo = 'alquiler';
+let modo='alquiler';
+function setModo(m,btn){modo=m;document.querySelectorAll('.pill').forEach(p=>p.classList.remove('active'));btn.classList.add('active')}
 
-  function setModo(m, btn) {
-    modo = m;
-    document.querySelectorAll('.pill').forEach(p => p.classList.remove('active'));
-    btn.classList.add('active');
+const SLUGS_IDEALISTA={'madrid':'madrid-municipio','barcelona':'barcelona-municipio','valencia':'valencia-municipio','sevilla':'sevilla-municipio','bilbao':'bilbao','zaragoza':'zaragoza-municipio','malaga':'malaga-municipio','alicante':'alicante-municipio','murcia':'murcia-municipio','valladolid':'valladolid-municipio','palma':'palma-de-mallorca','las palmas':'las-palmas-de-gran-canaria','vitoria':'vitoria-gasteiz','san sebastian':'donostia-san-sebastian','santander':'santander','cordoba':'cordoba-municipio','granada':'granada-municipio','vigo':'vigo','gijon':'gijon','la coruna':'a-coruna','cadiz':'cadiz','toledo':'toledo','burgos':'burgos','salamanca':'salamanca','logrono':'logrono','badajoz':'badajoz','huelva':'huelva','leon':'leon','tarragona':'tarragona','lleida':'lleida','girona':'girona'};
+
+const SLUGS_FOTOCASA={'madrid':'madrid-municipio','barcelona':'barcelona-municipio','valencia':'valencia-municipio','sevilla':'sevilla-municipio','bilbao':'bilbao','zaragoza':'zaragoza-municipio','malaga':'malaga-municipio','alicante':'alicante-municipio','murcia':'murcia-municipio','palma':'palma-de-mallorca','vitoria':'vitoria-gasteiz','san sebastian':'san-sebastian','santander':'santander','cordoba':'cordoba-municipio','granada':'granada-municipio','vigo':'vigo','gijon':'gijon','la coruna':'a-coruna','valladolid':'valladolid-municipio'};
+
+function normalizar(s){return s.toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g,'')}
+function getSlug(ciudad,mapa){const n=normalizar(ciudad);if(mapa[n])return mapa[n];return n.replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'')}
+
+const PORTALES=[
+  {id:'idealista',name:'Idealista',desc:'El mayor catálogo de hogares de España'},
+  {id:'fotocasa',name:'Fotocasa',desc:'Miles de anuncios con fotos y visitas virtuales'},
+  {id:'habitaclia',name:'Habitaclia',desc:'Referente en Cataluña y Baleares'},
+  {id:'pisos',name:'Pisos.com',desc:'Cobertura nacional con alertas de precio'},
+  {id:'milanuncios',name:'Milanuncios',desc:'Anuncios de particulares y agencias'},
+  {id:'trovit',name:'Trovit',desc:'Motor de búsqueda agregado de hogares'},
+  {id:'kyero',name:'Kyero',desc:'Ideal para extranjeros que buscan en España'},
+  {id:'buscoinmueble',name:'Buscoinmueble',desc:'Agrega anuncios de múltiples fuentes'}
+];
+
+function buildUrl(id,ciudad,tipo,hab,pmin,pmax,metros){
+  const es=encodeURIComponent(ciudad);
+  let url='';
+  if(id==='idealista'){
+    const s=getSlug(ciudad,SLUGS_IDEALISTA);
+    url=`https://www.idealista.com/${modo==='compra'?'venta':'alquiler'}-viviendas/${s}/`;
+    const p=[];
+    if(tipo)p.push(`tipologia=${tipo}`);
+    if(hab)p.push(`habitaciones=${hab}`);
+    if(pmax)p.push(`precio-hasta=${pmax}`);
+    if(pmin)p.push(`precio-desde=${pmin}`);
+    if(metros)p.push(`metros-cuadrados-mas-de=${metros}`);
+    if(document.getElementById('x-ascensor').checked)p.push('caracteristicas[]=ascensor');
+    if(document.getElementById('x-garaje').checked)p.push('caracteristicas[]=garaje');
+    if(document.getElementById('x-terraza').checked)p.push('caracteristicas[]=terraza');
+    if(p.length)url+='?'+p.join('&');
+  }else if(id==='fotocasa'){
+    const s=getSlug(ciudad,SLUGS_FOTOCASA);
+    url=`https://www.fotocasa.es/${modo==='compra'?'comprar':'alquiler'}/vivienda/${s}/todas-las-zonas/l`;
+    const p=[];
+    if(pmax)p.push(`priceMax=${pmax}`);
+    if(pmin)p.push(`priceMin=${pmin}`);
+    if(hab)p.push(`minRooms=${hab}`);
+    if(metros)p.push(`minSurface=${metros}`);
+    if(document.getElementById('x-amueblado').checked)p.push('furnished=1');
+    if(p.length)url+='?'+p.join('&');
+  }else if(id==='habitaclia'){
+    const s=normalizar(ciudad).replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'');
+    url=`https://www.habitaclia.com/${modo==='compra'?'comprar':'alquiler'}-en-${s}`;
+    const p=[];
+    if(pmax)p.push(`maxprice=${pmax}`);
+    if(pmin)p.push(`minprice=${pmin}`);
+    if(hab)p.push(`rooms=${hab}`);
+    if(metros)p.push(`minarea=${metros}`);
+    if(p.length)url+='?'+p.join('&');
+  }else if(id==='pisos'){
+    const s=normalizar(ciudad).replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'');
+    url=`https://www.pisos.com/${modo==='compra'?'pisos-venta':'alquiler-pisos'}/${s}/`;
+    const p=[];
+    if(pmax)p.push(`maxprice=${pmax}`);
+    if(pmin)p.push(`minprice=${pmin}`);
+    if(hab)p.push(`habitaciones=${hab}`);
+    if(metros)p.push(`minmeters=${metros}`);
+    if(p.length)url+='?'+p.join('&');
+  }else if(id==='milanuncios'){
+    url=`https://www.milanuncios.com/${modo==='compra'?'inmobiliaria':'pisos-en-alquiler'}/?demanda=n&q=${es}`;
+    if(pmax)url+=`&precio_hasta=${pmax}`;
+    if(pmin)url+=`&precio_desde=${pmin}`;
+  }else if(id==='trovit'){
+    url=`https://casas.trovit.es/index.php/cod.search_homes/type.${modo==='compra'?'2':'1'}/what_d.${es}/origin.0`;
+    if(pmax)url+=`/price_max.${pmax}`;
+    if(pmin)url+=`/price_min.${pmin}`;
+    if(metros)url+=`/size_min.${metros}`;
+  }else if(id==='kyero'){
+    url=`https://www.kyero.com/es/${modo==='compra'?'en-venta':'en-alquiler'}?q=${es}`;
+    if(pmax)url+=`&max_price=${pmax}`;
+    if(pmin)url+=`&min_price=${pmin}`;
+    if(hab)url+=`&bedrooms_min=${hab}`;
+  }else{
+    url=`https://www.buscoinmueble.com/${modo==='compra'?'venta':'alquiler'}/?texto=${es}`;
+    if(pmax)url+=`&precio_max=${pmax}`;
+    if(pmin)url+=`&precio_min=${pmin}`;
+    if(hab)url+=`&habitaciones=${hab}`;
   }
+  return url;
+}
 
-  const PORTALES = [
-    { id: 'idealista',     name: 'Idealista',     desc: 'El mayor catálogo de hogares de España' },
-    { id: 'fotocasa',      name: 'Fotocasa',       desc: 'Miles de anuncios con fotos y visitas virtuales' },
-    { id: 'habitaclia',    name: 'Habitaclia',     desc: 'Referente en Cataluña y Baleares' },
-    { id: 'pisos',         name: 'Pisos.com',      desc: 'Cobertura nacional con alertas de precio' },
-    { id: 'buscoinmueble', name: 'Buscoinmueble',  desc: 'Agrega anuncios de múltiples fuentes' }
-  ];
+function getRecent(){try{return JSON.parse(localStorage.getItem('hogar_recent')||'[]')}catch{return[]}}
+function saveRecent(ciudad){let r=getRecent().filter(x=>x.toLowerCase()!==ciudad.toLowerCase());r.unshift(ciudad);r=r.slice(0,5);try{localStorage.setItem('hogar_recent',JSON.stringify(r))}catch{}renderRecent()}
+function removeRecent(ciudad){const r=getRecent().filter(x=>x!==ciudad);try{localStorage.setItem('hogar_recent',JSON.stringify(r))}catch{}renderRecent()}
+function renderRecent(){const r=getRecent();const el=document.getElementById('recent-searches');if(!r.length){el.innerHTML='';return}el.innerHTML=`<div class="recent-label">Búsquedas recientes</div><div class="recent-pills">${r.map(c=>`<div class="recent-pill" onclick="usarRecent('${c.replace(/'/g,"\\'")}')">⏱ ${c}<span class="recent-x" onclick="event.stopPropagation();removeRecent('${c.replace(/'/g,"\\'")}')">✕</span></div>`).join('')}</div>`}
+function usarRecent(ciudad){document.getElementById('ciudad').value=ciudad;buscar()}
 
-  function slug(str) {
-    return str.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-  }
+function limpiar(){
+  document.getElementById('ciudad').value='';
+  document.getElementById('tipo').value='';
+  document.getElementById('habitaciones').value='';
+  document.getElementById('pmin').value='';
+  document.getElementById('pmax').value='';
+  document.getElementById('metros').value='';
+  document.querySelectorAll('.extra-check input').forEach(c=>c.checked=false);
+  ['searching','notice','results-header','portals-list','tags-row'].forEach(id=>document.getElementById(id).style.display='none');
+  document.getElementById('portals-list').innerHTML='';
+}
 
-  function buildUrl(id, ciudad, tipo, hab, pmin, pmax, metros) {
-    const s = slug(ciudad) || 'espana';
-    const es = encodeURIComponent(ciudad);
-    let url = '';
-    if (id === 'idealista') {
-      url = `https://www.idealista.com/${modo === 'compra' ? 'venta' : 'alquiler'}-viviendas/${s}/`;
-      const p = [];
-      if (tipo) p.push(`tipologia=${tipo}`);
-      if (hab) p.push(`habitaciones=${hab}`);
-      if (pmax) p.push(`precio-hasta=${pmax}`);
-      if (pmin) p.push(`precio-desde=${pmin}`);
-      if (metros) p.push(`metros-cuadrados-mas-de=${metros}`);
-      if (p.length) url += '?' + p.join('&');
-    } else if (id === 'fotocasa') {
-      url = `https://www.fotocasa.es/${modo === 'compra' ? 'comprar' : 'alquiler'}/vivienda/${s}/todas-las-zonas/l`;
-      const p = [];
-      if (pmax) p.push(`priceMax=${pmax}`);
-      if (pmin) p.push(`priceMin=${pmin}`);
-      if (hab) p.push(`minRooms=${hab}`);
-      if (metros) p.push(`minSurface=${metros}`);
-      if (p.length) url += '?' + p.join('&');
-    } else if (id === 'habitaclia') {
-      url = `https://www.habitaclia.com/${modo === 'compra' ? 'comprar' : 'alquiler'}-en-${s}`;
-      const p = [];
-      if (pmax) p.push(`maxprice=${pmax}`);
-      if (hab) p.push(`rooms=${hab}`);
-      if (p.length) url += '?' + p.join('&');
-    } else if (id === 'pisos') {
-      url = `https://www.pisos.com/${modo === 'compra' ? 'pisos-venta' : 'alquiler-pisos'}/${s}/`;
-      const p = [];
-      if (pmax) p.push(`maxprice=${pmax}`);
-      if (pmin) p.push(`minprice=${pmin}`);
-      if (hab) p.push(`habitaciones=${hab}`);
-      if (p.length) url += '?' + p.join('&');
-    } else {
-      url = `https://www.buscoinmueble.com/${modo === 'compra' ? 'venta' : 'alquiler'}/?texto=${es}`;
-      if (pmax) url += `&precio_max=${pmax}`;
-      if (hab) url += `&habitaciones=${hab}`;
-    }
-    return url;
-  }
+function buscar(){
+  const ciudad=document.getElementById('ciudad').value.trim();
+  if(!ciudad){const inp=document.getElementById('ciudad');inp.style.borderColor='#ff5c3a';inp.focus();setTimeout(()=>inp.style.borderColor='',2000);return}
+  const tipo=document.getElementById('tipo').value;
+  const hab=document.getElementById('habitaciones').value;
+  const pmin=document.getElementById('pmin').value;
+  const pmax=document.getElementById('pmax').value;
+  const metros=document.getElementById('metros').value;
+  saveRecent(ciudad);
+  ['notice','results-header','portals-list','tags-row'].forEach(id=>document.getElementById(id).style.display='none');
+  document.getElementById('portals-list').innerHTML='';
+  document.getElementById('searching').style.display='block';
+  document.getElementById('searching-text').textContent=`Buscando en ${PORTALES.length} fuentes...`;
+  document.querySelector('.body-section').scrollIntoView({behavior:'smooth'});
+  setTimeout(()=>{
+    document.getElementById('searching').style.display='none';
+    document.getElementById('notice').style.display='flex';
+    document.getElementById('results-header').style.display='flex';
+    const list=document.getElementById('portals-list');
+    list.style.display='flex';
+    document.getElementById('tags-row').style.display='flex';
+    document.getElementById('results-title').textContent=`Hogares en ${ciudad}`;
+    document.getElementById('results-count').textContent=`${PORTALES.length} fuentes`;
+    list.innerHTML=PORTALES.map((p,i)=>`<a href="${buildUrl(p.id,ciudad,tipo,hab,pmin,pmax,metros)}" target="_blank" rel="noopener noreferrer" class="portal-row" id="pr${i}"><div class="portal-num">${String(i+1).padStart(2,'0')}</div><div class="portal-info"><div class="portal-name">${p.name}</div><div class="portal-desc">${p.desc}</div></div><div class="portal-arrow">→</div></a>`).join('');
+    PORTALES.forEach((_,i)=>setTimeout(()=>{const el=document.getElementById(`pr${i}`);if(el)el.classList.add('visible')},i*80));
+  },1200);
+}
 
-  function buscar() {
-    const ciudad = document.getElementById('ciudad').value.trim();
-    if (!ciudad) {
-      const inp = document.getElementById('ciudad');
-      inp.style.borderColor = '#ff5c3a';
-      inp.focus();
-      setTimeout(() => inp.style.borderColor = '', 2000);
-      return;
-    }
-    const tipo = document.getElementById('tipo').value;
-    const hab = document.getElementById('habitaciones').value;
-    const pmin = document.getElementById('pmin').value;
-    const pmax = document.getElementById('pmax').value;
-    const metros = document.getElementById('metros').value;
-
-    document.getElementById('notice').style.display = 'flex';
-    document.getElementById('results-header').style.display = 'flex';
-    document.getElementById('portals-list').style.display = 'flex';
-    document.getElementById('tags-row').style.display = 'flex';
-    document.getElementById('results-title').textContent = `Hogares en ${ciudad}`;
-    document.getElementById('results-count').textContent = `${PORTALES.length} fuentes`;
-
-    document.getElementById('portals-list').innerHTML = PORTALES.map((p, i) => {
-      const url = buildUrl(p.id, ciudad, tipo, hab, pmin, pmax, metros);
-      return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="portal-row">
-        <div class="portal-num">${String(i + 1).padStart(2, '0')}</div>
-        <div class="portal-info">
-          <div class="portal-name">${p.name}</div>
-          <div class="portal-desc">${p.desc}</div>
-        </div>
-        <div class="portal-arrow">→</div>
-      </a>`;
-    }).join('');
-
-    document.querySelector('.body-section').scrollIntoView({ behavior: 'smooth' });
-  }
+renderRecent();
 </script>
-
 </body>
 </html>
