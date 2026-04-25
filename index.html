@@ -33,14 +33,14 @@ nav{background:var(--accent2);padding:0 2.5rem;height:60px;display:flex;align-it
 .main-search input{width:100%;padding:18px 60px 18px 20px;border:2px solid var(--border2);border-radius:var(--r);font-family:var(--body);font-size:16px;color:var(--ink);background:var(--surface2);outline:none;transition:border-color 0.2s}
 .main-search input:focus{border-color:var(--accent);background:#fff}
 .main-search input::placeholder{color:var(--ink3)}
-.search-icon{position:absolute;right:18px;top:50%;transform:translateY(-50%);width:26px;height:26px;background:var(--accent2);border-radius:8px;display:flex;align-items:center;justify-content:center}
+.search-icon{position:absolute;right:18px;top:50%;transform:translateY(-50%);width:26px;height:26px;background:var(--accent2);border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer}
 .search-icon svg{width:14px;height:14px;stroke:#fff;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
 .recent-searches{margin-bottom:1rem;min-height:24px}
 .recent-label{font-size:11px;color:var(--ink3);margin-bottom:6px;font-weight:500}
 .recent-pills{display:flex;flex-wrap:wrap;gap:6px}
 .recent-pill{font-size:12px;color:var(--ink2);background:var(--surface2);border:1px solid var(--border2);padding:4px 12px;border-radius:100px;cursor:pointer;transition:all 0.15s;display:flex;align-items:center;gap:6px}
 .recent-pill:hover{border-color:var(--accent);color:var(--accent)}
-.recent-x{font-size:10px;color:var(--ink3);cursor:pointer;line-height:1}
+.recent-x{font-size:10px;color:var(--ink3);cursor:pointer}
 .recent-x:hover{color:#cc0000}
 .filters-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:1rem}
 .filter-box{display:flex;flex-direction:column;gap:5px}
@@ -70,15 +70,23 @@ nav{background:var(--accent2);padding:0 2.5rem;height:60px;display:flex;align-it
 .results-header{display:none;align-items:baseline;justify-content:space-between;margin-bottom:1rem}
 .results-header h2{font-family:var(--head);font-size:18px;font-weight:700;color:var(--ink)}
 .results-header span{font-size:13px;color:var(--ink3)}
+.section-label{font-size:11px;font-weight:600;color:var(--ink3);text-transform:uppercase;letter-spacing:0.1em;margin:1.25rem 0 0.75rem;padding-bottom:0.5rem;border-bottom:1px solid var(--border)}
 .portals-list{display:none;flex-direction:column;gap:10px}
 .portal-row{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--r);padding:1.25rem 1.5rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;text-decoration:none;color:inherit;transition:all 0.18s;opacity:0;transform:translateY(10px)}
 .portal-row.visible{opacity:1;transform:translateY(0);transition:opacity 0.3s ease,transform 0.3s ease,border-color 0.18s}
 .portal-row:hover{border-color:var(--accent);transform:translateX(6px)}
+.portal-row.google{border-style:dashed;background:var(--surface2)}
+.portal-row.google:hover{border-color:var(--accent);border-style:dashed}
 .portal-num{width:32px;height:32px;border-radius:8px;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-family:var(--head);font-size:13px;font-weight:700;color:var(--ink2);flex-shrink:0;transition:all 0.18s}
 .portal-row:hover .portal-num{background:var(--accent);color:#fff}
 .portal-info{flex:1}
 .portal-name{font-family:var(--head);font-size:15px;font-weight:700;color:var(--ink);margin-bottom:2px}
 .portal-desc{font-size:12px;color:var(--ink3)}
+.portal-meta{display:flex;gap:6px;margin-top:5px;flex-wrap:wrap}
+.badge{font-size:10px;font-weight:600;padding:3px 8px;border-radius:100px}
+.badge-fit{background:rgba(255,92,58,0.12);color:#c04020}
+.badge-spec{background:rgba(26,26,46,0.08);color:var(--accent2)}
+.badge-google{background:#e8f4fd;color:#1565c0;border:1px solid #90caf9}
 .portal-arrow{font-size:22px;color:var(--border2);transition:color 0.18s}
 .portal-row:hover .portal-arrow{color:var(--accent)}
 .tags-row{display:none;flex-wrap:wrap;gap:8px;margin-top:1rem;padding-top:1rem;border-top:1px solid var(--border)}
@@ -99,20 +107,19 @@ footer{text-align:center;padding:2rem;font-size:12px;color:var(--ink3);border-to
   <div class="nav-logo">hogar<em>.</em></div>
   <div class="nav-tag">Beta gratuita</div>
 </nav>
-
 <div class="hero">
   <div class="hero-label">Buscador de hogar</div>
   <h1>Tu próximo hogar<br><span>te está esperando</span></h1>
   <p>Busca en todos los sitios a la vez. Sin complicaciones.</p>
   <div class="search-float">
-    <div class="mode-pills">
+    <div class="mode-pills" id="mode-pills">
       <button class="pill active" onclick="setModo('alquiler',this)">Alquiler</button>
       <button class="pill" onclick="setModo('compra',this)">Compra</button>
       <button class="pill" onclick="setModo('compartir',this)">Compartir piso</button>
     </div>
     <div class="main-search">
-      <input type="text" id="ciudad" placeholder="¿Dónde quieres vivir? Ciudad, barrio..."/>
-      <div class="search-icon"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="22" y2="22"/></svg></div>
+      <input type="text" id="ciudad" placeholder="¿Dónde quieres vivir? Ciudad, barrio..." onkeydown="if(event.key==='Enter')buscar()"/>
+      <div class="search-icon" onclick="buscar()"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="22" y2="22"/></svg></div>
     </div>
     <div class="recent-searches" id="recent-searches"></div>
     <div class="filters-row">
@@ -152,10 +159,10 @@ footer{text-align:center;padding:2rem;font-size:12px;color:var(--ink3);border-to
 
 <div class="body-section">
   <div class="searching" id="searching">
-    <div class="searching-text" id="searching-text">Buscando en 8 fuentes...</div>
+    <div class="searching-text" id="searching-text">Buscando...</div>
     <div class="dots"><span></span><span></span><span></span></div>
   </div>
-  <div class="notice" id="notice"><div class="notice-dot"></div><span>Accederás directamente a cada resultado con tus filtros ya aplicados. Resultados 100% reales y actualizados.</span></div>
+  <div class="notice" id="notice"><div class="notice-dot"></div><span>Accederás directamente a cada resultado con tus filtros aplicados. Resultados 100% reales y actualizados.</span></div>
   <div class="results-header" id="results-header"><h2 id="results-title">Hogares encontrados</h2><span id="results-count"></span></div>
   <div class="portals-list" id="portals-list"></div>
   <div class="tags-row" id="tags-row">
@@ -165,94 +172,81 @@ footer{text-align:center;padding:2rem;font-size:12px;color:var(--ink3);border-to
     <span class="tag">Actualizado al momento</span>
   </div>
 </div>
-
 <footer>hogar. — Beta gratuita — 2025</footer>
 
 <script>
 let modo='alquiler';
-function setModo(m,btn){modo=m;document.querySelectorAll('.pill').forEach(p=>p.classList.remove('active'));btn.classList.add('active')}
 
-const PORTALES=[
-  {id:'idealista',name:'Idealista',desc:'El mayor catálogo de hogares de España'},
-  {id:'fotocasa',name:'Fotocasa',desc:'Miles de anuncios con fotos y visitas virtuales'},
-  {id:'habitaclia',name:'Habitaclia',desc:'Referente en Cataluña y Baleares'},
-  {id:'pisos',name:'Pisos.com',desc:'Cobertura nacional con alertas de precio'},
-  {id:'milanuncios',name:'Milanuncios',desc:'Anuncios de particulares y agencias'},
-  {id:'trovit',name:'Trovit',desc:'Motor de búsqueda agregado de hogares'},
-  {id:'kyero',name:'Kyero',desc:'Ideal para extranjeros que buscan en España'},
-  {id:'buscoinmueble',name:'Buscoinmueble',desc:'Agrega anuncios de múltiples fuentes'}
+function setModo(m,btn){
+  modo=m;
+  document.querySelectorAll('#mode-pills .pill').forEach(p=>p.classList.remove('active'));
+  btn.classList.add('active');
+  ocultarResultados();
+}
+
+function ocultarResultados(){
+  ['notice','results-header','portals-list','tags-row'].forEach(id=>document.getElementById(id).style.display='none');
+  document.getElementById('portals-list').innerHTML='';
+}
+
+const CATALOGO=[
+  {id:'idealista',name:'Idealista',desc:'El mayor catálogo de hogares de España',ops:['alquiler','compra','compartir'],fit:{alquiler:88,compra:88,compartir:82},spec:'Nacional',google:true,urls:{alquiler:'https://www.idealista.com/alquiler-viviendas/',compra:'https://www.idealista.com/venta-viviendas/',compartir:'https://www.idealista.com/pisos-compartidos/'}},
+  {id:'fotocasa',name:'Fotocasa',desc:'Miles de anuncios con fotos y visitas virtuales',ops:['alquiler','compra','compartir'],fit:{alquiler:85,compra:85,compartir:78},spec:'Nacional',google:true,urls:{alquiler:'https://www.fotocasa.es/es/alquiler/viviendas/espana/todas-las-zonas/l',compra:'https://www.fotocasa.es/es/comprar/viviendas/espana/todas-las-zonas/l',compartir:'https://www.fotocasa.es/es/compartir/pisos/espana/todas-las-zonas/l'}},
+  {id:'pisos',name:'Pisos.com',desc:'Cobertura nacional con alertas de precio',ops:['alquiler','compra','compartir'],fit:{alquiler:80,compra:80,compartir:75},spec:'Nacional',google:false,urls:{alquiler:'https://www.pisos.com/alquiler_viviendas/',compra:'https://www.pisos.com/',compartir:'https://www.pisos.com/alquiler_habitaciones/'}},
+  {id:'habitaclia',name:'Habitaclia',desc:'Referente en Cataluña y Baleares',ops:['alquiler','compra'],fit:{alquiler:78,compra:78,compartir:0},spec:'Cataluña · Baleares',google:false,urls:{alquiler:'https://www.habitaclia.com/alquiler.htm',compra:'https://www.habitaclia.com/'}},
+  {id:'yaencontre',name:'yaencontre',desc:'Buenas rutas para compra y alquiler de pisos y casas',ops:['alquiler','compra'],fit:{alquiler:74,compra:76,compartir:0},spec:'Nacional',google:false,urls:{alquiler:'https://www.yaencontre.com/alquiler/pisos',compra:'https://www.yaencontre.com/venta/pisos'}},
+  {id:'milanuncios',name:'Milanuncios',desc:'Anuncios de particulares sin intermediarios',ops:['alquiler','compra','compartir'],fit:{alquiler:72,compra:68,compartir:74},spec:'Particulares',google:false,urls:{alquiler:'https://www.milanuncios.com/pisos-en-alquiler/',compra:'https://www.milanuncios.com/inmobiliaria/',compartir:'https://www.milanuncios.com/pisos-en-alquiler/'}},
+  {id:'pisocompartido',name:'Pisocompartido',desc:'Especialista en habitaciones y pisos compartidos',ops:['compartir'],fit:{alquiler:0,compra:0,compartir:95},spec:'Especialista compartir',google:false,urls:{compartir:'https://www.pisocompartido.com/'}},
+  {id:'kyero',name:'Kyero',desc:'Ideal para extranjeros que buscan en España',ops:['alquiler','compra'],fit:{alquiler:65,compra:68,compartir:0},spec:'Internacional',google:false,urls:{alquiler:'https://www.kyero.com/es/en-alquiler',compra:'https://www.kyero.com/es/en-venta'}}
 ];
 
 function normalizar(s){return s.toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g,'')}
 
-function buildUrl(id,ciudad,tipo,hab,pmin,pmax,metros){
-  const es=encodeURIComponent(ciudad);
-  const n=normalizar(ciudad);
-  let url='';
+function fitScore(portal,ciudad){
+  let score=portal.fit[modo]||0;
+  const c=normalizar(ciudad);
+  if(portal.id==='habitaclia'){if(['barcelona','girona','tarragona','lleida','baleares','mallorca','ibiza','menorca'].some(z=>c.includes(z)))score=Math.min(99,score+10);}
+  if(portal.id==='kyero'){if(['marbella','costa','alicante','benidorm','torrevieja','malaga','tenerife','gran canaria','ibiza','mallorca'].some(z=>c.includes(z)))score=Math.min(99,score+12);}
+  if(portal.id==='pisocompartido'&&modo==='compartir')score=95;
+  return score;
+}
 
-  if(id==='idealista'){
-    // Usamos el buscador general de Idealista — nunca da error de URL
-    const accion=modo==='compra'?'venta':'alquiler';
-    url=`https://www.idealista.com/${accion}-viviendas/?texto=${es}`;
-    if(hab)url+=`&habitaciones=${hab}`;
-    if(pmax)url+=`&precio-hasta=${pmax}`;
-    if(pmin)url+=`&precio-desde=${pmin}`;
-    if(metros)url+=`&metros-cuadrados-mas-de=${metros}`;
-    if(tipo)url+=`&tipologia=${tipo}`;
-  } else if(id==='fotocasa'){
-    // Usamos el buscador general de Fotocasa — nunca da error de URL
-    const accion=modo==='compra'?'comprar':'alquiler';
-    url=`https://www.fotocasa.es/${accion}/vivienda/espana/todas-las-zonas/l?texto=${es}`;
-    if(pmax)url+=`&priceMax=${pmax}`;
-    if(pmin)url+=`&priceMin=${pmin}`;
-    if(hab)url+=`&minRooms=${hab}`;
-    if(metros)url+=`&minSurface=${metros}`;
-  } else if(id==='habitaclia'){
-    const s=n.replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'');
-    url=`https://www.habitaclia.com/${modo==='compra'?'comprar':'alquiler'}-en-${s}`;
-    const p=[];
-    if(pmax)p.push(`maxprice=${pmax}`);
-    if(pmin)p.push(`minprice=${pmin}`);
-    if(hab)p.push(`rooms=${hab}`);
-    if(metros)p.push(`minarea=${metros}`);
-    if(p.length)url+='?'+p.join('&');
-  } else if(id==='pisos'){
-    const s=n.replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'');
-    url=`https://www.pisos.com/${modo==='compra'?'pisos-venta':'alquiler-pisos'}/${s}/`;
-    const p=[];
-    if(pmax)p.push(`maxprice=${pmax}`);
-    if(pmin)p.push(`minprice=${pmin}`);
-    if(hab)p.push(`habitaciones=${hab}`);
-    if(metros)p.push(`minmeters=${metros}`);
-    if(p.length)url+='?'+p.join('&');
-  } else if(id==='milanuncios'){
-    url=`https://www.milanuncios.com/${modo==='compra'?'inmobiliaria':'pisos-en-alquiler'}/?demanda=n&q=${es}`;
-    if(pmax)url+=`&precio_hasta=${pmax}`;
-    if(pmin)url+=`&precio_desde=${pmin}`;
-  } else if(id==='trovit'){
-    url=`https://casas.trovit.es/index.php/cod.search_homes/type.${modo==='compra'?'2':'1'}/what_d.${es}/origin.0`;
-    if(pmax)url+=`/price_max.${pmax}`;
-    if(pmin)url+=`/price_min.${pmin}`;
-    if(metros)url+=`/size_min.${metros}`;
-  } else if(id==='kyero'){
-    url=`https://www.kyero.com/es/${modo==='compra'?'en-venta':'en-alquiler'}?q=${es}`;
-    if(pmax)url+=`&max_price=${pmax}`;
-    if(pmin)url+=`&min_price=${pmin}`;
-    if(hab)url+=`&bedrooms_min=${hab}`;
-  } else {
-    url=`https://www.buscoinmueble.com/${modo==='compra'?'venta':'alquiler'}/?texto=${es}`;
-    if(pmax)url+=`&precio_max=${pmax}`;
-    if(pmin)url+=`&precio_min=${pmin}`;
-    if(hab)url+=`&habitaciones=${hab}`;
-  }
+function fitLabel(score){if(score>=86)return'Muy alta';if(score>=72)return'Alta';if(score>=58)return'Buena';return'Útil'}
+
+function getPortalesActivos(ciudad){
+  return CATALOGO
+    .filter(p=>p.ops.includes(modo)&&p.fit[modo]>0)
+    .map(p=>({...p,score:fitScore(p,ciudad)}))
+    .sort((a,b)=>b.score-a.score);
+}
+
+function buildUrlDirecto(portal,ciudad,tipo,hab,pmin,pmax,metros){
+  const es=encodeURIComponent(ciudad);
+  const s=normalizar(ciudad).replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'');
+  const id=portal.id;
+  let url=portal.urls[modo]||portal.urls['alquiler']||'#';
+  if(id==='habitaclia'){url=`https://www.habitaclia.com/${modo==='compra'?'comprar':'alquiler'}-en-${s}`;const p=[];if(pmax)p.push(`maxprice=${pmax}`);if(pmin)p.push(`minprice=${pmin}`);if(hab)p.push(`rooms=${hab}`);if(metros)p.push(`minarea=${metros}`);if(p.length)url+='?'+p.join('&');}
+  else if(id==='pisos'){const accion=modo==='compra'?'pisos-venta':modo==='compartir'?'alquiler-habitaciones':'alquiler-pisos';url=`https://www.pisos.com/${accion}/${s}/`;const p=[];if(pmax)p.push(`maxprice=${pmax}`);if(pmin)p.push(`minprice=${pmin}`);if(hab)p.push(`habitaciones=${hab}`);if(metros)p.push(`minmeters=${metros}`);if(p.length)url+='?'+p.join('&');}
+  else if(id==='milanuncios'){const accion=modo==='compra'?'inmobiliaria':'pisos-en-alquiler';url=`https://www.milanuncios.com/${accion}/?demanda=n&q=${es}`;if(pmax)url+=`&precio_hasta=${pmax}`;if(pmin)url+=`&precio_desde=${pmin}`;}
+  else if(id==='yaencontre'){const accion=modo==='compra'?'venta':'alquiler';const t=tipo==='casa'?'casas':'pisos';url=`https://www.yaencontre.com/${accion}/${t}/${s}`;const p=[];if(pmax)p.push(`maxPrice=${pmax}`);if(pmin)p.push(`minPrice=${pmin}`);if(hab)p.push(`minRooms=${hab}`);if(p.length)url+='?'+p.join('&');}
+  else if(id==='kyero'){url=`https://www.kyero.com/es/${modo==='compra'?'en-venta':'en-alquiler'}?q=${es}`;if(pmax)url+=`&max_price=${pmax}`;if(pmin)url+=`&min_price=${pmin}`;if(hab)url+=`&bedrooms_min=${hab}`;}
+  else if(id==='pisocompartido'){url=`https://www.pisocompartido.com/?q=${es}`;if(pmax)url+=`&max_price=${pmax}`;}
   return url;
 }
 
+function buildUrlGoogle(portal,ciudad,tipo,hab,pmin,pmax,metros){
+  const dominio=portal.id==='idealista'?'idealista.com':'fotocasa.es';
+  const accion=modo==='compra'?'venta':modo==='compartir'?'compartir':'alquiler';
+  let q=`site:${dominio} ${accion} ${ciudad}`;
+  if(tipo)q+=` ${tipo}`;if(hab)q+=` ${hab} habitaciones`;if(pmax)q+=` precio hasta ${pmax}`;if(pmin)q+=` precio desde ${pmin}`;if(metros)q+=` ${metros} metros`;
+  return `https://www.google.com/search?q=${encodeURIComponent(q)}`;
+}
+
 function getRecent(){try{return JSON.parse(localStorage.getItem('hogar_recent')||'[]')}catch{return[]}}
-function saveRecent(ciudad){let r=getRecent().filter(x=>x.toLowerCase()!==ciudad.toLowerCase());r.unshift(ciudad);r=r.slice(0,5);try{localStorage.setItem('hogar_recent',JSON.stringify(r))}catch{}renderRecent()}
-function removeRecent(ciudad){const r=getRecent().filter(x=>x!==ciudad);try{localStorage.setItem('hogar_recent',JSON.stringify(r))}catch{}renderRecent()}
+function saveRecent(c){let r=getRecent().filter(x=>x.toLowerCase()!==c.toLowerCase());r.unshift(c);r=r.slice(0,5);try{localStorage.setItem('hogar_recent',JSON.stringify(r))}catch{}renderRecent()}
+function removeRecent(c){const r=getRecent().filter(x=>x!==c);try{localStorage.setItem('hogar_recent',JSON.stringify(r))}catch{}renderRecent()}
 function renderRecent(){const r=getRecent();const el=document.getElementById('recent-searches');if(!r.length){el.innerHTML='';return}el.innerHTML=`<div class="recent-label">Búsquedas recientes</div><div class="recent-pills">${r.map(c=>`<div class="recent-pill" onclick="usarRecent('${c.replace(/'/g,"\\'")}')">⏱ ${c}<span class="recent-x" onclick="event.stopPropagation();removeRecent('${c.replace(/'/g,"\\'")}')">✕</span></div>`).join('')}</div>`}
-function usarRecent(ciudad){document.getElementById('ciudad').value=ciudad;buscar()}
+function usarRecent(c){document.getElementById('ciudad').value=c;buscar()}
 
 function limpiar(){
   document.getElementById('ciudad').value='';
@@ -262,6 +256,8 @@ function limpiar(){
   document.getElementById('pmax').value='';
   document.getElementById('metros').value='';
   document.querySelectorAll('.extra-check input').forEach(c=>c.checked=false);
+  modo='alquiler';
+  document.querySelectorAll('#mode-pills .pill').forEach((p,i)=>p.classList.toggle('active',i===0));
   ['searching','notice','results-header','portals-list','tags-row'].forEach(id=>document.getElementById(id).style.display='none');
   document.getElementById('portals-list').innerHTML='';
 }
@@ -275,10 +271,10 @@ function buscar(){
   const pmax=document.getElementById('pmax').value;
   const metros=document.getElementById('metros').value;
   saveRecent(ciudad);
-  ['notice','results-header','portals-list','tags-row'].forEach(id=>document.getElementById(id).style.display='none');
-  document.getElementById('portals-list').innerHTML='';
+  ocultarResultados();
+  const portales=getPortalesActivos(ciudad);
   document.getElementById('searching').style.display='block';
-  document.getElementById('searching-text').textContent=`Buscando en ${PORTALES.length} fuentes...`;
+  document.getElementById('searching-text').textContent=`Buscando en ${portales.length} fuentes...`;
   document.querySelector('.body-section').scrollIntoView({behavior:'smooth'});
   setTimeout(()=>{
     document.getElementById('searching').style.display='none';
@@ -288,9 +284,21 @@ function buscar(){
     list.style.display='flex';
     document.getElementById('tags-row').style.display='flex';
     document.getElementById('results-title').textContent=`Hogares en ${ciudad}`;
-    document.getElementById('results-count').textContent=`${PORTALES.length} fuentes`;
-    list.innerHTML=PORTALES.map((p,i)=>`<a href="${buildUrl(p.id,ciudad,tipo,hab,pmin,pmax,metros)}" target="_blank" rel="noopener noreferrer" class="portal-row" id="pr${i}"><div class="portal-num">${String(i+1).padStart(2,'0')}</div><div class="portal-info"><div class="portal-name">${p.name}</div><div class="portal-desc">${p.desc}</div></div><div class="portal-arrow">→</div></a>`).join('');
-    PORTALES.forEach((_,i)=>setTimeout(()=>{const el=document.getElementById(`pr${i}`);if(el)el.classList.add('visible')},i*80));
+    document.getElementById('results-count').textContent=`${portales.length} fuentes`;
+    const directos=portales.filter(p=>!p.google);
+    const google=portales.filter(p=>p.google);
+    let contador=1;
+    let html='';
+    if(directos.length){
+      html+=`<div class="section-label">Acceso directo con tus filtros</div>`;
+      html+=directos.map((p,i)=>`<a href="${buildUrlDirecto(p,ciudad,tipo,hab,pmin,pmax,metros)}" target="_blank" rel="noopener noreferrer" class="portal-row" id="pd${i}"><div class="portal-num">${String(contador++).padStart(2,'0')}</div><div class="portal-info"><div class="portal-name">${p.name}</div><div class="portal-desc">${p.desc}</div><div class="portal-meta"><span class="badge badge-fit">Afinidad ${fitLabel(p.score)} · ${p.score}/99</span><span class="badge badge-spec">${p.spec}</span></div></div><div class="portal-arrow">→</div></a>`).join('');
+    }
+    if(google.length){
+      html+=`<div class="section-label">Abre Google con tu búsqueda aplicada</div>`;
+      html+=google.map((p,i)=>`<a href="${buildUrlGoogle(p,ciudad,tipo,hab,pmin,pmax,metros)}" target="_blank" rel="noopener noreferrer" class="portal-row google" id="pg${i}"><div class="portal-num">${String(contador++).padStart(2,'0')}</div><div class="portal-info"><div class="portal-name">${p.name}</div><div class="portal-desc">${p.desc}</div><div class="portal-meta"><span class="badge badge-fit">Afinidad ${fitLabel(p.score)} · ${p.score}/99</span><span class="badge badge-google">🔍 Busca en Google dentro de ${p.name}</span></div></div><div class="portal-arrow">→</div></a>`).join('');
+    }
+    list.innerHTML=html;
+    [...directos,...google].forEach((_,i)=>{setTimeout(()=>{const el=i<directos.length?document.getElementById(`pd${i}`):document.getElementById(`pg${i-directos.length}`);if(el)el.classList.add('visible');},i*80)});
   },1200);
 }
 
