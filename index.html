@@ -39,8 +39,8 @@ nav{background:var(--accent2);padding:0 2.5rem;height:60px;display:flex;align-it
 .autocomplete-item{padding:12px 18px;font-size:14px;cursor:pointer;color:var(--ink);transition:background 0.1s;text-align:left;border-bottom:1px solid var(--border)}
 .autocomplete-item:last-child{border-bottom:none}
 .autocomplete-item:hover,.autocomplete-item.selected{background:var(--surface2)}
-.autocomplete-item .ac-name{font-weight:600;color:var(--ink)}
-.autocomplete-item .ac-sub{font-size:12px;color:var(--ink3);margin-top:2px}
+.ac-name{font-weight:600;color:var(--ink)}
+.ac-sub{font-size:12px;color:var(--ink3);margin-top:2px}
 .autocomplete-loading{padding:12px 18px;font-size:13px;color:var(--ink3);text-align:center}
 .recent-searches{margin-bottom:1rem;min-height:24px}
 .recent-label{font-size:11px;color:var(--ink3);margin-bottom:6px;font-weight:500}
@@ -94,6 +94,7 @@ nav{background:var(--accent2);padding:0 2.5rem;height:60px;display:flex;align-it
 .badge-fit{background:rgba(255,92,58,0.12);color:#c04020}
 .badge-spec{background:rgba(26,26,46,0.08);color:var(--accent2)}
 .badge-google{background:#e8f4fd;color:#1565c0;border:1px solid #90caf9}
+.badge-directo{background:#e8f5e9;color:#2e7d32;border:1px solid #a5d6a7}
 .portal-arrow{font-size:22px;color:var(--border2);transition:color 0.18s}
 .portal-row:hover .portal-arrow{color:var(--accent)}
 .tags-row{display:none;flex-wrap:wrap;gap:8px;margin-top:1rem;padding-top:1rem;border-top:1px solid var(--border)}
@@ -171,7 +172,7 @@ footer{text-align:center;padding:2rem;font-size:12px;color:var(--ink3);border-to
     <div class="searching-text" id="searching-text">Buscando...</div>
     <div class="dots"><span></span><span></span><span></span></div>
   </div>
-  <div class="notice" id="notice"><div class="notice-dot"></div><span>Te llevamos a cada portal con tu búsqueda ya aplicada. Pulsa cualquiera para ver los anuncios reales.</span></div>
+  <div class="notice" id="notice"><div class="notice-dot"></div><span>Te llevamos a cada portal con tu búsqueda aplicada. Pulsa cualquiera para ver los anuncios reales.</span></div>
   <div class="results-header" id="results-header"><h2 id="results-title">Hogares encontrados</h2><span id="results-count"></span></div>
   <div class="portals-list" id="portals-list"></div>
   <div class="tags-row" id="tags-row">
@@ -192,31 +193,55 @@ let acItems=[];
 const inputCiudad=document.getElementById('ciudad');
 const acBox=document.getElementById('autocomplete-box');
 
+function normalizar(s){return s.toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g,'')}
+
 async function buscarSugerencias(q){
   if(q.length<2){acBox.style.display='none';return}
   acBox.innerHTML='<div class="autocomplete-loading">Buscando...</div>';
   acBox.style.display='block';
   try{
-    const url=`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&countrycodes=es&addressdetails=1&limit=6&format=json&accept-language=es`;
-    const res=await fetch(url);
+    const url=`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q+' España')}&addressdetails=1&limit=8&format=json&accept-language=es`;
+    const res=await fetch(url,{headers:{'User-Agent':'hogar-buscador/1.0'}});
     const data=await res.json();
-    if(!data.length){acBox.innerHTML='<div class="autocomplete-loading">Sin resultados</div>';return}
-    acIdx=-1;
-    acItems=data.map(item=>{
-      const addr=item.address||{};
-      const nombre=addr.suburb||addr.quarter||addr.neighbourhood||addr.village||addr.town||addr.city||addr.municipality||item.display_name.split(',')[0];
-      const partes=[addr.city||addr.town||addr.municipality||addr.county||'',addr.state||''].filter(Boolean);
-      const sub=partes.join(', ');
-      return{nombre,sub,display:nombre+(sub?`, ${sub}`:'')};
-    });
-    acBox.innerHTML=acItems.map((it,i)=>`
-      <div class="autocomplete-item" data-idx="${i}" onmousedown="elegirCiudad(${i})">
-        <div class="ac-name">${it.nombre}</div>
-        ${it.sub?`<div class="ac-sub">${it.sub}</div>`:''}
-      </div>`).join('');
+    const filtrados=data.filter(i=>(i.address||{}).country_code==='es');
+    if(!filtrados.length){
+      // Segundo intento sin " España"
+      const url2=`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&countrycodes=es&addressdetails=1&limit=8&format=json&accept-language=es`;
+      const res2=await fetch(url2,{headers:{'User-Agent':'hogar-buscador/1.0'}});
+      const data2=await res2.json();
+      if(!data2.length){acBox.innerHTML='<div class="autocomplete-loading">Sin resultados — escribe la zona manualmente</div>';return}
+      procesarResultados(data2,q);
+    }else{
+      procesarResultados(filtrados,q);
+    }
   }catch(e){
-    acBox.innerHTML='<div class="autocomplete-loading">Error. Escribe la zona manualmente.</div>';
+    acBox.style.display='none';
   }
+}
+
+function procesarResultados(data,q){
+  const nq=normalizar(q);
+  const items=data.map(item=>{
+    const addr=item.address||{};
+    const nombre=addr.suburb||addr.quarter||addr.neighbourhood||addr.village||addr.town||addr.city||addr.municipality||addr.county||item.display_name.split(',')[0];
+    const provincia=addr.province||addr.state_district||addr.county||'';
+    const comunidad=addr.state||'';
+    const partes=[provincia,comunidad].filter(Boolean).filter((v,i,a)=>a.indexOf(v)===i);
+    const sub=partes.slice(0,2).join(', ');
+    const score=normalizar(nombre).startsWith(nq)?2:1;
+    return{nombre,sub,display:nombre+(sub?`, ${sub}`:''),score};
+  })
+  .sort((a,b)=>b.score-a.score)
+  .filter((item,i,arr)=>arr.findIndex(x=>x.display===item.display)===i)
+  .slice(0,6);
+
+  if(!items.length){acBox.innerHTML='<div class="autocomplete-loading">Sin resultados</div>';return}
+  acIdx=-1;acItems=items;
+  acBox.innerHTML=items.map((it,i)=>`
+    <div class="autocomplete-item" data-idx="${i}" onmousedown="elegirCiudad(${i})">
+      <div class="ac-name">${it.nombre}</div>
+      ${it.sub?`<div class="ac-sub">${it.sub}</div>`:''}
+    </div>`).join('');
 }
 
 function elegirCiudad(idx){
@@ -230,9 +255,8 @@ inputCiudad.addEventListener('input',()=>{
   clearTimeout(acTimer);
   const q=inputCiudad.value.trim();
   if(!q){acBox.style.display='none';return}
-  acTimer=setTimeout(()=>buscarSugerencias(q),300);
+  acTimer=setTimeout(()=>buscarSugerencias(q),350);
 });
-
 inputCiudad.addEventListener('keydown',(e)=>{
   const items=acBox.querySelectorAll('.autocomplete-item');
   if(e.key==='ArrowDown'){e.preventDefault();acIdx=Math.min(acIdx+1,items.length-1);items.forEach((el,i)=>el.classList.toggle('selected',i===acIdx));}
@@ -243,17 +267,15 @@ inputCiudad.addEventListener('keydown',(e)=>{
 document.addEventListener('click',(e)=>{if(!e.target.closest('.main-search'))acBox.style.display='none';});
 
 const CATALOGO=[
-  {id:'idealista',name:'Idealista',desc:'El mayor catálogo de hogares de España',ops:['alquiler','compra','compartir'],fit:{alquiler:88,compra:88,compartir:82},spec:'Nacional',google:true},
-  {id:'fotocasa',name:'Fotocasa',desc:'Miles de anuncios con fotos y visitas virtuales',ops:['alquiler','compra','compartir'],fit:{alquiler:85,compra:85,compartir:78},spec:'Nacional',google:true},
-  {id:'pisos',name:'Pisos.com',desc:'Cobertura nacional con alertas de precio',ops:['alquiler','compra','compartir'],fit:{alquiler:80,compra:80,compartir:75},spec:'Nacional',google:false},
-  {id:'habitaclia',name:'Habitaclia',desc:'Referente en Cataluña y Baleares',ops:['alquiler','compra'],fit:{alquiler:78,compra:78,compartir:0},spec:'Cataluña · Baleares',google:false},
-  {id:'yaencontre',name:'yaencontre',desc:'Buenas rutas para compra y alquiler',ops:['alquiler','compra'],fit:{alquiler:74,compra:76,compartir:0},spec:'Nacional',google:false},
-  {id:'milanuncios',name:'Milanuncios',desc:'Anuncios de particulares sin intermediarios',ops:['alquiler','compra','compartir'],fit:{alquiler:72,compra:68,compartir:74},spec:'Particulares',google:false},
-  {id:'pisocompartido',name:'Pisocompartido',desc:'Especialista en habitaciones y pisos compartidos',ops:['compartir'],fit:{alquiler:0,compra:0,compartir:95},spec:'Especialista compartir',google:false},
-  {id:'kyero',name:'Kyero',desc:'Ideal para extranjeros que buscan en España',ops:['alquiler','compra'],fit:{alquiler:65,compra:68,compartir:0},spec:'Internacional',google:false}
+  {id:'idealista',name:'Idealista',desc:'El mayor catálogo de hogares de España',ops:['alquiler','compra','compartir'],fit:{alquiler:88,compra:88,compartir:82},spec:'Nacional',tipo:'google'},
+  {id:'fotocasa',name:'Fotocasa',desc:'Miles de anuncios con fotos y visitas virtuales',ops:['alquiler','compra','compartir'],fit:{alquiler:85,compra:85,compartir:78},spec:'Nacional',tipo:'google'},
+  {id:'pisos',name:'Pisos.com',desc:'Cobertura nacional con alertas de precio',ops:['alquiler','compra','compartir'],fit:{alquiler:80,compra:80,compartir:75},spec:'Nacional',tipo:'google'},
+  {id:'habitaclia',name:'Habitaclia',desc:'Referente en Cataluña y Baleares',ops:['alquiler','compra'],fit:{alquiler:78,compra:78,compartir:0},spec:'Cataluña · Baleares',tipo:'google'},
+  {id:'yaencontre',name:'yaencontre',desc:'Buenas rutas para compra y alquiler',ops:['alquiler','compra'],fit:{alquiler:74,compra:76,compartir:0},spec:'Nacional',tipo:'google'},
+  {id:'milanuncios',name:'Milanuncios',desc:'Anuncios de particulares sin intermediarios',ops:['alquiler','compra','compartir'],fit:{alquiler:72,compra:68,compartir:74},spec:'Particulares',tipo:'directo'},
+  {id:'pisocompartido',name:'Pisocompartido',desc:'Especialista en habitaciones y pisos compartidos',ops:['compartir'],fit:{alquiler:0,compra:0,compartir:95},spec:'Especialista compartir',tipo:'directo'},
+  {id:'kyero',name:'Kyero',desc:'Ideal para extranjeros que buscan en España',ops:['alquiler','compra'],fit:{alquiler:65,compra:68,compartir:0},spec:'Internacional',tipo:'directo'}
 ];
-
-function normalizar(s){return s.toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g,'')}
 
 function fitScore(portal,ciudad){
   let score=portal.fit[modo]||0;
@@ -264,64 +286,34 @@ function fitScore(portal,ciudad){
   return score;
 }
 function fitLabel(s){return s>=86?'Muy alta':s>=72?'Alta':s>=58?'Buena':'Útil'}
-function getPortalesActivos(ciudad){return CATALOGO.filter(p=>p.ops.includes(modo)&&p.fit[modo]>0).map(p=>({...p,score:fitScore(p,ciudad)})).sort((a,b)=>b.score-a.score)}
-
-// SOLUCIÓN 404: todos los portales usan búsqueda general con texto — nunca URL específica que pueda fallar
-function buildUrl(portal,ciudad,tipo,hab,pmin,pmax,metros){
-  const es=encodeURIComponent(ciudad);
-  const id=portal.id;
-  let url='';
-
-  if(id==='pisos'){
-    const accion=modo==='compra'?'venta-pisos':modo==='compartir'?'alquiler-habitaciones':'alquiler-pisos';
-    url=`https://www.pisos.com/${accion}/?texto=${es}`;
-    if(pmax)url+=`&preciomax=${pmax}`;
-    if(pmin)url+=`&preciomin=${pmin}`;
-    if(hab)url+=`&habitaciones=${hab}`;
-    if(metros)url+=`&metrosmin=${metros}`;
-  }
-  else if(id==='habitaclia'){
-    const accion=modo==='compra'?'compra':'alquiler';
-    url=`https://www.habitaclia.com/busqueda.htm?tipo=${accion}&texto=${es}`;
-    if(pmax)url+=`&maxprice=${pmax}`;
-    if(pmin)url+=`&minprice=${pmin}`;
-    if(hab)url+=`&rooms=${hab}`;
-  }
-  else if(id==='milanuncios'){
-    const accion=modo==='compra'?'inmobiliaria':'pisos-en-alquiler';
-    url=`https://www.milanuncios.com/${accion}/?demanda=n&q=${es}`;
-    if(pmax)url+=`&precio_hasta=${pmax}`;
-    if(pmin)url+=`&precio_desde=${pmin}`;
-  }
-  else if(id==='yaencontre'){
-    const accion=modo==='compra'?'venta':'alquiler';
-    url=`https://www.yaencontre.com/${accion}/pisos/?q=${es}`;
-    if(pmax)url+=`&maxPrice=${pmax}`;
-    if(pmin)url+=`&minPrice=${pmin}`;
-    if(hab)url+=`&minRooms=${hab}`;
-  }
-  else if(id==='kyero'){
-    url=`https://www.kyero.com/es/${modo==='compra'?'en-venta':'en-alquiler'}?q=${es}`;
-    if(pmax)url+=`&max_price=${pmax}`;
-    if(pmin)url+=`&min_price=${pmin}`;
-    if(hab)url+=`&bedrooms_min=${hab}`;
-  }
-  else if(id==='pisocompartido'){
-    url=`https://www.pisocompartido.com/?q=${es}`;
-    if(pmax)url+=`&max_price=${pmax}`;
-  }
-  return url;
+function getPortalesActivos(ciudad){
+  return CATALOGO.filter(p=>p.ops.includes(modo)&&p.fit[modo]>0).map(p=>({...p,score:fitScore(p,ciudad)})).sort((a,b)=>b.score-a.score);
 }
 
-function buildUrlGoogle(portal,ciudad,tipo,hab,pmin,pmax,metros){
-  const dominio=portal.id==='idealista'?'idealista.com':'fotocasa.es';
-  const accion=modo==='compra'?'venta':modo==='compartir'?'compartir':'alquiler';
-  let q=`site:${dominio} ${accion} ${ciudad}`;
-  if(tipo)q+=` ${tipo}`;
+function buildUrlDirecto(id,ciudad,pmin,pmax,hab,metros){
+  const es=encodeURIComponent(ciudad);
+  if(id==='milanuncios'){
+    const accion=modo==='compra'?'inmobiliaria':'pisos-en-alquiler';
+    let url=`https://www.milanuncios.com/${accion}/?demanda=n&q=${es}`;
+    if(pmax)url+=`&precio_hasta=${pmax}`;if(pmin)url+=`&precio_desde=${pmin}`;return url;
+  }
+  if(id==='kyero'){
+    let url=`https://www.kyero.com/es/${modo==='compra'?'en-venta':'en-alquiler'}?q=${es}`;
+    if(pmax)url+=`&max_price=${pmax}`;if(pmin)url+=`&min_price=${pmin}`;if(hab)url+=`&bedrooms_min=${hab}`;return url;
+  }
+  if(id==='pisocompartido'){
+    let url=`https://www.pisocompartido.com/?q=${es}`;if(pmax)url+=`&max_price=${pmax}`;return url;
+  }
+  return'#';
+}
+
+function buildUrlGoogle(id,ciudad,tipo,hab,pmin,pmax,metros){
+  const dominios={idealista:'idealista.com',fotocasa:'fotocasa.es',pisos:'pisos.com',habitaclia:'habitaclia.com',yaencontre:'yaencontre.com'};
+  const accion=modo==='compra'?'venta':modo==='compartir'?'compartir piso':'alquiler';
+  let q=`${accion} ${tipo||'piso'} ${ciudad} site:${dominios[id]}`;
   if(hab)q+=` ${hab} habitaciones`;
-  if(pmax)q+=` precio hasta ${pmax}`;
-  if(pmin)q+=` precio desde ${pmin}`;
-  if(metros)q+=` ${metros} metros`;
+  if(pmax)q+=` hasta ${pmax} euros`;
+  if(pmin)q+=` desde ${pmin} euros`;
   return`https://www.google.com/search?q=${encodeURIComponent(q)}`;
 }
 
@@ -367,16 +359,16 @@ function buscar(){
     document.getElementById('tags-row').style.display='flex';
     document.getElementById('results-title').textContent=`Hogares en ${ciudad}`;
     document.getElementById('results-count').textContent=`${portales.length} fuentes`;
-    const directos=portales.filter(p=>!p.google);
-    const google=portales.filter(p=>p.google);
+    const directos=portales.filter(p=>p.tipo==='directo');
+    const google=portales.filter(p=>p.tipo==='google');
     let contador=1;let html='';
     if(directos.length){
       html+=`<div class="section-label">Acceso directo con tus filtros</div>`;
-      html+=directos.map((p,i)=>`<a href="${buildUrl(p,ciudad,tipo,hab,pmin,pmax,metros)}" target="_blank" rel="noopener noreferrer" class="portal-row" id="pd${i}"><div class="portal-num">${String(contador++).padStart(2,'0')}</div><div class="portal-info"><div class="portal-name">${p.name}</div><div class="portal-desc">${p.desc}</div><div class="portal-meta"><span class="badge badge-fit">Afinidad ${fitLabel(p.score)} · ${p.score}/99</span><span class="badge badge-spec">${p.spec}</span></div></div><div class="portal-arrow">→</div></a>`).join('');
+      html+=directos.map((p,i)=>`<a href="${buildUrlDirecto(p.id,ciudad,pmin,pmax,hab,metros)}" target="_blank" rel="noopener noreferrer" class="portal-row" id="pd${i}"><div class="portal-num">${String(contador++).padStart(2,'0')}</div><div class="portal-info"><div class="portal-name">${p.name}</div><div class="portal-desc">${p.desc}</div><div class="portal-meta"><span class="badge badge-fit">Afinidad ${fitLabel(p.score)} · ${p.score}/99</span><span class="badge badge-directo">✓ Acceso directo</span><span class="badge badge-spec">${p.spec}</span></div></div><div class="portal-arrow">→</div></a>`).join('');
     }
     if(google.length){
-      html+=`<div class="section-label">Abre Google con tu búsqueda aplicada</div>`;
-      html+=google.map((p,i)=>`<a href="${buildUrlGoogle(p,ciudad,tipo,hab,pmin,pmax,metros)}" target="_blank" rel="noopener noreferrer" class="portal-row google" id="pg${i}"><div class="portal-num">${String(contador++).padStart(2,'0')}</div><div class="portal-info"><div class="portal-name">${p.name}</div><div class="portal-desc">${p.desc}</div><div class="portal-meta"><span class="badge badge-fit">Afinidad ${fitLabel(p.score)} · ${p.score}/99</span><span class="badge badge-google">🔍 Busca en Google dentro de ${p.name}</span></div></div><div class="portal-arrow">→</div></a>`).join('');
+      html+=`<div class="section-label">Búsqueda en Google dentro del portal</div>`;
+      html+=google.map((p,i)=>`<a href="${buildUrlGoogle(p.id,ciudad,tipo,hab,pmin,pmax,metros)}" target="_blank" rel="noopener noreferrer" class="portal-row google" id="pg${i}"><div class="portal-num">${String(contador++).padStart(2,'00')}</div><div class="portal-info"><div class="portal-name">${p.name}</div><div class="portal-desc">${p.desc}</div><div class="portal-meta"><span class="badge badge-fit">Afinidad ${fitLabel(p.score)} · ${p.score}/99</span><span class="badge badge-google">🔍 Resultados reales vía Google</span></div></div><div class="portal-arrow">→</div></a>`).join('');
     }
     list.innerHTML=html;
     [...directos,...google].forEach((_,i)=>{setTimeout(()=>{const el=i<directos.length?document.getElementById(`pd${i}`):document.getElementById(`pg${i-directos.length}`);if(el)el.classList.add('visible');},i*80)});
