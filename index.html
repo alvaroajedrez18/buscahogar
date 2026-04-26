@@ -193,55 +193,59 @@ let acItems=[];
 const inputCiudad=document.getElementById('ciudad');
 const acBox=document.getElementById('autocomplete-box');
 
-function normalizar(s){return s.toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g,'')}
+function normalizar(s){
+  return s.toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+}
 
+// Autocompletado con Photon API — mejor para España y euskera
 async function buscarSugerencias(q){
   if(q.length<2){acBox.style.display='none';return}
   acBox.innerHTML='<div class="autocomplete-loading">Buscando...</div>';
   acBox.style.display='block';
   try{
-    const url=`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q+' España')}&addressdetails=1&limit=8&format=json&accept-language=es`;
-    const res=await fetch(url,{headers:{'User-Agent':'hogar-buscador/1.0'}});
+    // Photon es una API de autocompletado basada en OpenStreetMap, mucho mejor para nombres locales
+    const url=`https://photon.komoot.io/api/?q=${encodeURIComponent(q)}&lang=es&limit=8&bbox=-9.3,35.9,4.3,43.8`;
+    const res=await fetch(url);
     const data=await res.json();
-    const filtrados=data.filter(i=>(i.address||{}).country_code==='es');
+    const features=data.features||[];
+
+    // Filtrar solo España y tipos de lugar habitables
+    const tiposValidos=['city','town','village','suburb','neighbourhood','borough','quarter','district','municipality'];
+    const filtrados=features
+      .filter(f=>{
+        const p=f.properties||{};
+        return p.country==='España'&&(tiposValidos.includes(p.type)||tiposValidos.includes(p.osm_value));
+      })
+      .map(f=>{
+        const p=f.properties||{};
+        const nombre=p.name||p.city||p.town||p.village||'';
+        const partes=[];
+        if(p.city&&p.city!==nombre)partes.push(p.city);
+        else if(p.county)partes.push(p.county);
+        if(p.state)partes.push(p.state);
+        const sub=partes.filter(Boolean).slice(0,2).join(', ');
+        const nq=normalizar(q);
+        const score=normalizar(nombre).startsWith(nq)?2:1;
+        return{nombre,sub,display:nombre+(sub?`, ${sub}`:''),score};
+      })
+      .filter(i=>i.nombre)
+      .sort((a,b)=>b.score-a.score)
+      .filter((item,i,arr)=>arr.findIndex(x=>x.display===item.display)===i)
+      .slice(0,6);
+
     if(!filtrados.length){
-      // Segundo intento sin " España"
-      const url2=`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&countrycodes=es&addressdetails=1&limit=8&format=json&accept-language=es`;
-      const res2=await fetch(url2,{headers:{'User-Agent':'hogar-buscador/1.0'}});
-      const data2=await res2.json();
-      if(!data2.length){acBox.innerHTML='<div class="autocomplete-loading">Sin resultados — escribe la zona manualmente</div>';return}
-      procesarResultados(data2,q);
-    }else{
-      procesarResultados(filtrados,q);
+      acBox.innerHTML='<div class="autocomplete-loading">Sin resultados — escribe la zona manualmente</div>';
+      return;
     }
+    acIdx=-1;acItems=filtrados;
+    acBox.innerHTML=filtrados.map((it,i)=>`
+      <div class="autocomplete-item" onmousedown="elegirCiudad(${i})">
+        <div class="ac-name">${it.nombre}</div>
+        ${it.sub?`<div class="ac-sub">${it.sub}</div>`:''}
+      </div>`).join('');
   }catch(e){
     acBox.style.display='none';
   }
-}
-
-function procesarResultados(data,q){
-  const nq=normalizar(q);
-  const items=data.map(item=>{
-    const addr=item.address||{};
-    const nombre=addr.suburb||addr.quarter||addr.neighbourhood||addr.village||addr.town||addr.city||addr.municipality||addr.county||item.display_name.split(',')[0];
-    const provincia=addr.province||addr.state_district||addr.county||'';
-    const comunidad=addr.state||'';
-    const partes=[provincia,comunidad].filter(Boolean).filter((v,i,a)=>a.indexOf(v)===i);
-    const sub=partes.slice(0,2).join(', ');
-    const score=normalizar(nombre).startsWith(nq)?2:1;
-    return{nombre,sub,display:nombre+(sub?`, ${sub}`:''),score};
-  })
-  .sort((a,b)=>b.score-a.score)
-  .filter((item,i,arr)=>arr.findIndex(x=>x.display===item.display)===i)
-  .slice(0,6);
-
-  if(!items.length){acBox.innerHTML='<div class="autocomplete-loading">Sin resultados</div>';return}
-  acIdx=-1;acItems=items;
-  acBox.innerHTML=items.map((it,i)=>`
-    <div class="autocomplete-item" data-idx="${i}" onmousedown="elegirCiudad(${i})">
-      <div class="ac-name">${it.nombre}</div>
-      ${it.sub?`<div class="ac-sub">${it.sub}</div>`:''}
-    </div>`).join('');
 }
 
 function elegirCiudad(idx){
@@ -255,7 +259,7 @@ inputCiudad.addEventListener('input',()=>{
   clearTimeout(acTimer);
   const q=inputCiudad.value.trim();
   if(!q){acBox.style.display='none';return}
-  acTimer=setTimeout(()=>buscarSugerencias(q),350);
+  acTimer=setTimeout(()=>buscarSugerencias(q),300);
 });
 inputCiudad.addEventListener('keydown',(e)=>{
   const items=acBox.querySelectorAll('.autocomplete-item');
@@ -266,14 +270,16 @@ inputCiudad.addEventListener('keydown',(e)=>{
 });
 document.addEventListener('click',(e)=>{if(!e.target.closest('.main-search'))acBox.style.display='none';});
 
+// Todos los portales via Google — la única forma fiable sin 404
+// Kyero es el único que acepta búsqueda directa por texto
 const CATALOGO=[
   {id:'idealista',name:'Idealista',desc:'El mayor catálogo de hogares de España',ops:['alquiler','compra','compartir'],fit:{alquiler:88,compra:88,compartir:82},spec:'Nacional',tipo:'google'},
   {id:'fotocasa',name:'Fotocasa',desc:'Miles de anuncios con fotos y visitas virtuales',ops:['alquiler','compra','compartir'],fit:{alquiler:85,compra:85,compartir:78},spec:'Nacional',tipo:'google'},
   {id:'pisos',name:'Pisos.com',desc:'Cobertura nacional con alertas de precio',ops:['alquiler','compra','compartir'],fit:{alquiler:80,compra:80,compartir:75},spec:'Nacional',tipo:'google'},
   {id:'habitaclia',name:'Habitaclia',desc:'Referente en Cataluña y Baleares',ops:['alquiler','compra'],fit:{alquiler:78,compra:78,compartir:0},spec:'Cataluña · Baleares',tipo:'google'},
   {id:'yaencontre',name:'yaencontre',desc:'Buenas rutas para compra y alquiler',ops:['alquiler','compra'],fit:{alquiler:74,compra:76,compartir:0},spec:'Nacional',tipo:'google'},
-  {id:'milanuncios',name:'Milanuncios',desc:'Anuncios de particulares sin intermediarios',ops:['alquiler','compra','compartir'],fit:{alquiler:72,compra:68,compartir:74},spec:'Particulares',tipo:'directo'},
-  {id:'pisocompartido',name:'Pisocompartido',desc:'Especialista en habitaciones y pisos compartidos',ops:['compartir'],fit:{alquiler:0,compra:0,compartir:95},spec:'Especialista compartir',tipo:'directo'},
+  {id:'milanuncios',name:'Milanuncios',desc:'Anuncios de particulares sin intermediarios',ops:['alquiler','compra','compartir'],fit:{alquiler:72,compra:68,compartir:74},spec:'Particulares',tipo:'google'},
+  {id:'pisocompartido',name:'Pisocompartido',desc:'Especialista en habitaciones y pisos compartidos',ops:['compartir'],fit:{alquiler:0,compra:0,compartir:95},spec:'Especialista compartir',tipo:'google'},
   {id:'kyero',name:'Kyero',desc:'Ideal para extranjeros que buscan en España',ops:['alquiler','compra'],fit:{alquiler:65,compra:68,compartir:0},spec:'Internacional',tipo:'directo'}
 ];
 
@@ -287,43 +293,62 @@ function fitScore(portal,ciudad){
 }
 function fitLabel(s){return s>=86?'Muy alta':s>=72?'Alta':s>=58?'Buena':'Útil'}
 function getPortalesActivos(ciudad){
-  return CATALOGO.filter(p=>p.ops.includes(modo)&&p.fit[modo]>0).map(p=>({...p,score:fitScore(p,ciudad)})).sort((a,b)=>b.score-a.score);
+  return CATALOGO
+    .filter(p=>p.ops.includes(modo)&&p.fit[modo]>0)
+    .map(p=>({...p,score:fitScore(p,ciudad)}))
+    .sort((a,b)=>b.score-a.score);
 }
 
-function buildUrlDirecto(id,ciudad,pmin,pmax,hab,metros){
+// URL directa solo para Kyero que sí funciona
+function buildUrlDirecto(ciudad,pmin,pmax,hab){
   const es=encodeURIComponent(ciudad);
-  if(id==='milanuncios'){
-    const accion=modo==='compra'?'inmobiliaria':'pisos-en-alquiler';
-    let url=`https://www.milanuncios.com/${accion}/?demanda=n&q=${es}`;
-    if(pmax)url+=`&precio_hasta=${pmax}`;if(pmin)url+=`&precio_desde=${pmin}`;return url;
-  }
-  if(id==='kyero'){
-    let url=`https://www.kyero.com/es/${modo==='compra'?'en-venta':'en-alquiler'}?q=${es}`;
-    if(pmax)url+=`&max_price=${pmax}`;if(pmin)url+=`&min_price=${pmin}`;if(hab)url+=`&bedrooms_min=${hab}`;return url;
-  }
-  if(id==='pisocompartido'){
-    let url=`https://www.pisocompartido.com/?q=${es}`;if(pmax)url+=`&max_price=${pmax}`;return url;
-  }
-  return'#';
+  let url=`https://www.kyero.com/es/${modo==='compra'?'en-venta':'en-alquiler'}?q=${es}`;
+  if(pmax)url+=`&max_price=${pmax}`;
+  if(pmin)url+=`&min_price=${pmin}`;
+  if(hab)url+=`&bedrooms_min=${hab}`;
+  return url;
 }
 
-function buildUrlGoogle(id,ciudad,tipo,hab,pmin,pmax,metros){
-  const dominios={idealista:'idealista.com',fotocasa:'fotocasa.es',pisos:'pisos.com',habitaclia:'habitaclia.com',yaencontre:'yaencontre.com'};
+// Google site search — funciona para cualquier zona de España sin 404
+function buildUrlGoogle(id,ciudad,tipo,hab,pmin,pmax){
+  const dominios={
+    idealista:'idealista.com',
+    fotocasa:'fotocasa.es',
+    pisos:'pisos.com',
+    habitaclia:'habitaclia.com',
+    yaencontre:'yaencontre.com',
+    milanuncios:'milanuncios.com',
+    pisocompartido:'pisocompartido.com'
+  };
   const accion=modo==='compra'?'venta':modo==='compartir'?'compartir piso':'alquiler';
-  let q=`${accion} ${tipo||'piso'} ${ciudad} site:${dominios[id]}`;
+  // Usamos solo el nombre de la localidad (sin provincia) para la búsqueda
+  const zona=ciudad.split(',')[0].trim();
+  let q=`${accion} ${tipo||'piso'} ${zona} site:${dominios[id]}`;
   if(hab)q+=` ${hab} habitaciones`;
   if(pmax)q+=` hasta ${pmax} euros`;
   if(pmin)q+=` desde ${pmin} euros`;
   return`https://www.google.com/search?q=${encodeURIComponent(q)}`;
 }
 
-function setModo(m,btn){modo=m;document.querySelectorAll('#mode-pills .pill').forEach(p=>p.classList.remove('active'));btn.classList.add('active');ocultarResultados()}
-function ocultarResultados(){['notice','results-header','portals-list','tags-row'].forEach(id=>document.getElementById(id).style.display='none');document.getElementById('portals-list').innerHTML=''}
+function setModo(m,btn){
+  modo=m;
+  document.querySelectorAll('#mode-pills .pill').forEach(p=>p.classList.remove('active'));
+  btn.classList.add('active');
+  ocultarResultados();
+}
+function ocultarResultados(){
+  ['notice','results-header','portals-list','tags-row'].forEach(id=>document.getElementById(id).style.display='none');
+  document.getElementById('portals-list').innerHTML='';
+}
 
 function getRecent(){try{return JSON.parse(localStorage.getItem('hogar_recent')||'[]')}catch{return[]}}
 function saveRecent(c){let r=getRecent().filter(x=>x.toLowerCase()!==c.toLowerCase());r.unshift(c);r=r.slice(0,5);try{localStorage.setItem('hogar_recent',JSON.stringify(r))}catch{}renderRecent()}
 function removeRecent(c){const r=getRecent().filter(x=>x!==c);try{localStorage.setItem('hogar_recent',JSON.stringify(r))}catch{}renderRecent()}
-function renderRecent(){const r=getRecent();const el=document.getElementById('recent-searches');if(!r.length){el.innerHTML='';return}el.innerHTML=`<div class="recent-label">Búsquedas recientes</div><div class="recent-pills">${r.map(c=>`<div class="recent-pill" onclick="usarRecent('${c.replace(/'/g,"\\'")}')">⏱ ${c}<span class="recent-x" onclick="event.stopPropagation();removeRecent('${c.replace(/'/g,"\\'")}')">✕</span></div>`).join('')}</div>`}
+function renderRecent(){
+  const r=getRecent();const el=document.getElementById('recent-searches');
+  if(!r.length){el.innerHTML='';return}
+  el.innerHTML=`<div class="recent-label">Búsquedas recientes</div><div class="recent-pills">${r.map(c=>`<div class="recent-pill" onclick="usarRecent('${c.replace(/'/g,"\\'")}')">⏱ ${c}<span class="recent-x" onclick="event.stopPropagation();removeRecent('${c.replace(/'/g,"\\'")}')">✕</span></div>`).join('')}</div>`;
+}
 function usarRecent(c){inputCiudad.value=c;buscar()}
 
 function limpiar(){
@@ -331,7 +356,8 @@ function limpiar(){
   ['tipo','habitaciones'].forEach(id=>document.getElementById(id).value='');
   ['pmin','pmax','metros'].forEach(id=>document.getElementById(id).value='');
   document.querySelectorAll('.extra-check input').forEach(c=>c.checked=false);
-  modo='alquiler';document.querySelectorAll('#mode-pills .pill').forEach((p,i)=>p.classList.toggle('active',i===0));
+  modo='alquiler';
+  document.querySelectorAll('#mode-pills .pill').forEach((p,i)=>p.classList.toggle('active',i===0));
   ['searching','notice','results-header','portals-list','tags-row'].forEach(id=>document.getElementById(id).style.display='none');
   document.getElementById('portals-list').innerHTML='';
 }
@@ -345,11 +371,14 @@ function buscar(){
   const pmin=document.getElementById('pmin').value;
   const pmax=document.getElementById('pmax').value;
   const metros=document.getElementById('metros').value;
-  saveRecent(ciudad);ocultarResultados();
+
+  saveRecent(ciudad);
+  ocultarResultados();
   const portales=getPortalesActivos(ciudad);
   document.getElementById('searching').style.display='block';
   document.getElementById('searching-text').textContent=`Buscando en ${portales.length} fuentes...`;
   document.querySelector('.body-section').scrollIntoView({behavior:'smooth'});
+
   setTimeout(()=>{
     document.getElementById('searching').style.display='none';
     document.getElementById('notice').style.display='flex';
@@ -357,21 +386,55 @@ function buscar(){
     const list=document.getElementById('portals-list');
     list.style.display='flex';
     document.getElementById('tags-row').style.display='flex';
-    document.getElementById('results-title').textContent=`Hogares en ${ciudad}`;
+    document.getElementById('results-title').textContent=`Hogares en ${ciudad.split(',')[0].trim()}`;
     document.getElementById('results-count').textContent=`${portales.length} fuentes`;
+
     const directos=portales.filter(p=>p.tipo==='directo');
     const google=portales.filter(p=>p.tipo==='google');
     let contador=1;let html='';
+
     if(directos.length){
       html+=`<div class="section-label">Acceso directo con tus filtros</div>`;
-      html+=directos.map((p,i)=>`<a href="${buildUrlDirecto(p.id,ciudad,pmin,pmax,hab,metros)}" target="_blank" rel="noopener noreferrer" class="portal-row" id="pd${i}"><div class="portal-num">${String(contador++).padStart(2,'0')}</div><div class="portal-info"><div class="portal-name">${p.name}</div><div class="portal-desc">${p.desc}</div><div class="portal-meta"><span class="badge badge-fit">Afinidad ${fitLabel(p.score)} · ${p.score}/99</span><span class="badge badge-directo">✓ Acceso directo</span><span class="badge badge-spec">${p.spec}</span></div></div><div class="portal-arrow">→</div></a>`).join('');
+      html+=directos.map((p,i)=>`
+        <a href="${buildUrlDirecto(ciudad,pmin,pmax,hab)}" target="_blank" rel="noopener noreferrer" class="portal-row" id="pd${i}">
+          <div class="portal-num">${String(contador++).padStart(2,'0')}</div>
+          <div class="portal-info">
+            <div class="portal-name">${p.name}</div>
+            <div class="portal-desc">${p.desc}</div>
+            <div class="portal-meta">
+              <span class="badge badge-fit">Afinidad ${fitLabel(p.score)} · ${p.score}/99</span>
+              <span class="badge badge-directo">✓ Acceso directo</span>
+              <span class="badge badge-spec">${p.spec}</span>
+            </div>
+          </div>
+          <div class="portal-arrow">→</div>
+        </a>`).join('');
     }
+
     if(google.length){
       html+=`<div class="section-label">Búsqueda en Google dentro del portal</div>`;
-      html+=google.map((p,i)=>`<a href="${buildUrlGoogle(p.id,ciudad,tipo,hab,pmin,pmax,metros)}" target="_blank" rel="noopener noreferrer" class="portal-row google" id="pg${i}"><div class="portal-num">${String(contador++).padStart(2,'00')}</div><div class="portal-info"><div class="portal-name">${p.name}</div><div class="portal-desc">${p.desc}</div><div class="portal-meta"><span class="badge badge-fit">Afinidad ${fitLabel(p.score)} · ${p.score}/99</span><span class="badge badge-google">🔍 Resultados reales vía Google</span></div></div><div class="portal-arrow">→</div></a>`).join('');
+      html+=google.map((p,i)=>`
+        <a href="${buildUrlGoogle(p.id,ciudad,tipo,hab,pmin,pmax)}" target="_blank" rel="noopener noreferrer" class="portal-row google" id="pg${i}">
+          <div class="portal-num">${String(contador++).padStart(2,'0')}</div>
+          <div class="portal-info">
+            <div class="portal-name">${p.name}</div>
+            <div class="portal-desc">${p.desc}</div>
+            <div class="portal-meta">
+              <span class="badge badge-fit">Afinidad ${fitLabel(p.score)} · ${p.score}/99</span>
+              <span class="badge badge-google">🔍 Resultados reales vía Google</span>
+            </div>
+          </div>
+          <div class="portal-arrow">→</div>
+        </a>`).join('');
     }
+
     list.innerHTML=html;
-    [...directos,...google].forEach((_,i)=>{setTimeout(()=>{const el=i<directos.length?document.getElementById(`pd${i}`):document.getElementById(`pg${i-directos.length}`);if(el)el.classList.add('visible');},i*80)});
+    [...directos,...google].forEach((_,i)=>{
+      setTimeout(()=>{
+        const el=i<directos.length?document.getElementById(`pd${i}`):document.getElementById(`pg${i-directos.length}`);
+        if(el)el.classList.add('visible');
+      },i*80);
+    });
   },1200);
 }
 
